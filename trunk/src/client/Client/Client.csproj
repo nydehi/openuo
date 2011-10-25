@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{7C9A758C-068E-4550-87C1-207C04665962}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Client</RootNamespace>
+    <AssemblyName>Client</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\..\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Ninject">
+      <HintPath>..\packages\Ninject.2.2.1.4\lib\net40-Client\Ninject.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\..\lib\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Diagnostics">
+      <HintPath>..\..\..\lib\SharpDX.Diagnostics.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D9">
+      <HintPath>..\..\..\lib\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Asserter.cs" />
+    <Compile Include="Collections\Cache.cs" />
+    <Compile Include="Configuration\ConfigFile.cs" />
+    <Compile Include="Configuration\ConfigKeys.cs" />
+    <Compile Include="Configuration\ConfigSections.cs" />
+    <Compile Include="Configuration\ConfigurationService.cs" />
+    <Compile Include="Configuration\IConfigurationService.cs" />
+    <Compile Include="DrawState.cs" />
+    <Compile Include="EngineModule.cs" />
+    <Compile Include="Diagnostics\ITraceListener.cs" />
+    <Compile Include="Diagnostics\Listeners\DebugLogTraceListener.cs" />
+    <Compile Include="Diagnostics\Listeners\DebugTraceListener.cs" />
+    <Compile Include="Diagnostics\TraceListener.cs" />
+    <Compile Include="Diagnostics\TraceMessage.cs" />
+    <Compile Include="Diagnostics\TraceMessageEventArgs.cs" />
+    <Compile Include="Diagnostics\Tracer.cs" />
+    <Compile Include="Diagnostics\TraceType.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="EngineBootstrapper.cs" />
+    <Compile Include="Extensions\ByteArrayExtensions.cs" />
+    <Compile Include="Extensions\ObjectExtensions.cs" />
+    <Compile Include="Extensions\StreamExtensions.cs" />
+    <Compile Include="Extensions\TypeExtensions.cs" />
+    <Compile Include="GameClock.cs" />
+    <Compile Include="Graphics\Camera2D.cs" />
+    <Compile Include="Graphics\ICamera.cs" />
+    <Compile Include="Graphics\Shaders\DiffuseShader.cs" />
+    <Compile Include="Graphics\Shaders\ShaderBase.cs" />
+    <Compile Include="Graphics\Textures\ITextureFactory.cs" />
+    <Compile Include="Graphics\Textures\TextureFactory.cs" />
+    <Compile Include="Graphics\VertexPositionNormalTexture.cs" />
+    <Compile Include="Graphics\VertexPositionColorTexture.cs" />
+    <Compile Include="ImageExtensions.cs" />
+    <Compile Include="IO\FileSystemHelper.cs" />
+    <Compile Include="IO\Paths.cs" />
+    <Compile Include="Item.cs" />
+    <Compile Include="IUpdate.cs" />
+    <Compile Include="Mobile.cs" />
+    <Compile Include="Modules\ModuleBase.cs" />
+    <Compile Include="Network\BufferPool.cs" />
+    <Compile Include="Network\ByteQueue.cs" />
+    <Compile Include="Network\MessagePump.cs" />
+    <Compile Include="Network\NetState.cs" />
+    <Compile Include="Network\Packet.cs" />
+    <Compile Include="Network\PacketHandler.cs" />
+    <Compile Include="Network\PacketHandlers.cs" />
+    <Compile Include="Network\PacketReader.cs" />
+    <Compile Include="Network\Packets\LoginPacket.cs" />
+    <Compile Include="Network\Packets\SeedPacket.cs" />
+    <Compile Include="Network\PacketWriter.cs" />
+    <Compile Include="Network\SendQueue.cs" />
+    <Compile Include="ObjectConverterter.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serial.cs" />
+    <Compile Include="Ultima\Art.cs" />
+    <Compile Include="Ultima\FileIndex.cs" />
+    <Compile Include="Ultima\HuedTile.cs" />
+    <Compile Include="Ultima\HuedTileList.cs" />
+    <Compile Include="Ultima\Hues.cs" />
+    <Compile Include="Ultima\ItemData.cs" />
+    <Compile Include="Ultima\LandData.cs" />
+    <Compile Include="Ultima\Maps.cs" />
+    <Compile Include="Ultima\PixelConverter.cs" />
+    <Compile Include="Ultima\StaticTile.cs" />
+    <Compile Include="Ultima\Textures.cs" />
+    <Compile Include="Ultima\Tile.cs" />
+    <Compile Include="Ultima\TileData.cs" />
+    <Compile Include="Ultima\TileFlag.cs" />
+    <Compile Include="Ultima\TileMatrix.cs" />
+    <Compile Include="UpdateState.cs" />
+    <Compile Include="World.cs" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Client.licenseheader" />
+    <None Include="Properties\app.manifest" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <None Include="Resources\DiffuseEffect.fx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\missing-texture.texture" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
