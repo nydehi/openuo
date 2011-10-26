@@ -19,6 +19,8 @@ using Client.Collections;
 using Client.Properties;
 using Client.Ultima;
 using SharpDX.Direct3D9;
+using SharpDX;
+using SharpDX.Direct3D;
 
 namespace Client.Graphics
 {
@@ -46,20 +48,7 @@ namespace Client.Graphics
 
         public TextureFactory(Engine engine)
         {
-            _missingTexture = new Texture(engine.Device, 128, 128, 0, Usage.AutoGenerateMipMap, Format.A8R8G8B8, Pool.Managed);
-            IntPtr dataPtr = _missingTexture.LockRectangle(0, LockFlags.None).DataPointer;
-
-            unsafe
-            {
-                byte* ptr = (byte*)dataPtr;
-                byte[] buffer = Resources.missing_texture;
-
-                for (int i = 0; i < buffer.Length; i++)
-                    *ptr++ = buffer[i];
-            }
-
-            _missingTexture.UnlockRectangle(0);
-
+            _missingTexture = Texture.FromMemory(engine.Device, Resources.MissingTexture);
             _landCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x1000);
             _staticCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x10000);
             _lastCacheClean = DateTime.MinValue;

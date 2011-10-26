@@ -3,6 +3,7 @@ using System.IO;
 using Client.Configuration;
 using Ninject;
 using SharpDX.Direct3D9;
+using Client.Graphics;
 
 namespace Client.Ultima
 {
@@ -40,16 +41,15 @@ namespace Client.Ultima
                 {
                     bin.ReadInt32();
 
-                    Texture texture = new Texture(engine.Device, 34, 1, 0, Usage.None, Format.A8R8G8B8, Pool.Managed); ;
+                    Texture texture = new Texture(engine.Device, 34, 1, 0, Usage.None, Format.A1R5G5B5, Pool.Managed); ;
                     IntPtr dataPtr = texture.LockRectangle(0, LockFlags.None).DataPointer;
 
                     unsafe
                     {
                         ushort* line = (ushort*)dataPtr;
-                        ushort[] pixels = new ushort[34];
 
                         for (int j = 0; j < 34; j++)
-                            pixels[j] = (ushort)(bin.ReadUInt16() | 0x8000);
+                            (*line++) = (ushort)(bin.ReadUInt16() | 0x8000);
 
                         texture.UnlockRectangle(0);
                         bin.ReadBytes(20); //Don't need to know the names

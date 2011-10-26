@@ -40,7 +40,7 @@ namespace Client.Configuration
 #if DEBUG
             SetValue(ConfigSections.Debug, ConfigKeys.DebugLogLevel, TraceLevels.Verbose);
 #else
-            SetValue(ConfigSections.Debug, ConfigKeys.LogLevel, TraceLevels.Warning);
+            SetValue(ConfigSections.Debug, ConfigKeys.DebugLogLevel, TraceLevels.Warning);
 #endif
         }
 

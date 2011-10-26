@@ -25,16 +25,16 @@ namespace Client.Graphics
     {
         public static readonly VertexElement[] VertexElements = new[]
         {
-            new VertexElement(0, 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
-            new VertexElement(0, 12, DeclarationType.Float4, DeclarationMethod.Default, DeclarationUsage.Color, 0),
-            new VertexElement(0, 24, DeclarationType.Float2, DeclarationMethod.Default, DeclarationUsage.TextureCoordinate, 0),
+            new VertexElement(0, sizeof(float) * 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
+            new VertexElement(0, sizeof(float) * 3, DeclarationType.Float2, DeclarationMethod.Default, DeclarationUsage.TextureCoordinate, 0),
+            new VertexElement(0, sizeof(float) * 5, DeclarationType.Float4, DeclarationMethod.Default, DeclarationUsage.Color, 0),
 			VertexElement.VertexDeclarationEnd
         };
 
         public const int SizeInBytes = sizeof(float) * 9;
 
         public Vector3 Position;
-        public Color4 Color;
         public Vector2 TextureCoordinate;
+        public Color4 Color;
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using SharpDX.Direct3D9;
+using SharpDX;
+using Client.Graphics;
 
 namespace Client.Ultima
 {
@@ -12,7 +14,7 @@ namespace Client.Ultima
         {
             _fileIndex = new FileIndex(engine, "texidx.mul", "texmaps.mul", 0x4000, 10);
         }
-       
+
         public unsafe Texture CreateTexture(Engine engine, int index)
         {
             if (!_fileIndex.FilesExist)
@@ -25,22 +27,22 @@ namespace Client.Ultima
 
             if (stream == null)
                 return null;
+            
+            int size = extra == 0 ? 64 : 128;
 
+            Texture texture = new Texture(engine.Device, size, size, 0, Usage.None, Format.A1R5G5B5, Pool.Managed);
+            DataRectangle rect = texture.LockRectangle(0, LockFlags.None);
             BinaryReader bin = new BinaryReader(stream);
 
-            int size = extra == 0 ? 64 : 128;
-            int pixelCount = size * size;
+            ushort* line = (ushort*)rect.DataPointer;
+            int delta = rect.Pitch >> 1;
 
-            Texture texture = new Texture(engine.Device, size, size, 0, Usage.None, Format.A8R8G8B8, Pool.Managed);
-            IntPtr dataPtr = texture.LockRectangle(0, LockFlags.None).DataPointer;
-
-            ushort* line = (ushort*)dataPtr;
-
-            for (int y = 0; y < size; ++y, line += size)
+            for (int y = 0; y < size; ++y, line += delta)
             {
                 ushort* cur = line;
+                ushort* end = cur + size;
 
-                for(int x = 0; x < size; x++)
+                while (cur < end)
                     *cur++ = (ushort)(bin.ReadUInt16() ^ 0x8000);
             }
 
@@ -51,7 +53,7 @@ namespace Client.Ultima
 
         //const int multiplier = 0xFF / 0x1F;
 
-        //public unsafe void CreateTexture(int index, out Texture2D diffuseTexture, out Texture2D normalTexture)
+        //public unsafe void CreateTexture(int index, out Texture diffuseTexture, out Texture normalTexture)
         //{
         //    diffuseTexture = null;
         //    normalTexture = null;
@@ -95,7 +97,7 @@ namespace Client.Ultima
         //        }
         //    }
 
-        //    diffuseTexture = new Texture2D(GraphicsDeviceManager.Current.GraphicsDevice, size, size, false, SurfaceFormat.Color);
+        //    diffuseTexture = new Texture(GraphicsDeviceManager.Current.GraphicsDevice, size, size, false, SurfaceFormat.Color);
         //    diffuseTexture.SetData(colors);
 
         //    float[] heights = GenerateHeightFields(pixels, size);
@@ -121,7 +123,7 @@ namespace Client.Ultima
         //        }
         //    }
 
-        //    normalTexture = new Texture2D(GraphicsDeviceManager.Current.GraphicsDevice, size, size, false, SurfaceFormat.Color);
+        //    normalTexture = new Texture(GraphicsDeviceManager.Current.GraphicsDevice, size, size, false, SurfaceFormat.Color);
         //    normalTexture.SetData(normalColors);
         //}
 

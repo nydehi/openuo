@@ -26,7 +26,7 @@ namespace Client
         {
             new DebugTraceListener { TraceLevel = TraceLevels.Verbose };
 
-            Kernel.Bind<IConfigurationService>().To<ConfigurationService>();
+            Kernel.Bind<IConfigurationService>().To<ConfigurationService>().InSingletonScope();
         }
     }
 }

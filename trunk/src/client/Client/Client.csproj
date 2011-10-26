@@ -16,7 +16,7 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -88,6 +88,7 @@
     <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
     <Compile Include="GameClock.cs" />
+    <Compile Include="Graphics\BoundingFrustum.cs" />
     <Compile Include="Graphics\Camera2D.cs" />
     <Compile Include="Graphics\ICamera.cs" />
     <Compile Include="Graphics\Shaders\DiffuseShader.cs" />
@@ -162,9 +163,10 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="Resources\DiffuseEffect.fx" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\missing-texture.texture" />
+    <None Include="MissingTexture.dds">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\MissingTexture.dds" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -121,7 +121,7 @@
   <data name="DiffuseEffect" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\diffuseeffect.fx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="missing_texture" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\missing-texture.texture;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="MissingTexture" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\MissingTexture.dds;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

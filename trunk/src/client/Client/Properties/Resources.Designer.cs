@@ -67,9 +67,9 @@ namespace Client.Properties {
             }
         }
         
-        internal static byte[] missing_texture {
+        internal static byte[] MissingTexture {
             get {
-                object obj = ResourceManager.GetObject("missing_texture", resourceCulture);
+                object obj = ResourceManager.GetObject("MissingTexture", resourceCulture);
                 return ((byte[])(obj));
             }
         }
