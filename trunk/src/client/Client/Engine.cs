@@ -1,12 +1,12 @@
 ﻿/***************************************************************************
- *   Copyright (c) 2010 OpenUO Software Team.
+ *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
  *   SVN revision information:
- *   $Author: $:
- *   $Date: $:
- *   $Revision: $:
- *   $Id: $:
+ *   $Author$:
+ *   $Date$:
+ *   $Revision$:
+ *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
  ***************************************************************************/
 
 using System;
+using System.Diagnostics;
 using System.Drawing;
-using System.Windows.Forms;
 using Client.Diagnostics;
 using Client.Graphics;
 using Client.Graphics.Shaders;
@@ -121,7 +121,7 @@ namespace Client
             _updateState = new UpdateState();
             _clock = new GameClock();
         }
-        
+
         ~Engine()
         {
             Dispose(false);
@@ -286,7 +286,7 @@ namespace Client
 
                     center.X = offset.X;
                     center.Y = offset.Y;
-                    
+
                     northVector.X = center.X;
                     northVector.Y = center.Y + TileSizeOver2 + tileZ;
 
@@ -351,6 +351,10 @@ namespace Client
 
             _device.EndScene();
             _device.Present();
+
+            float fps = 1f / (float)state.ElapsedGameTime.TotalSeconds;
+            Debug.WriteLine(string.Format("FPS: {0}", fps));
+            Debug.WriteLine(string.Format("Draw Calls: {0}", state.DrawCalls));
         }
 
         private void EndDraw()
