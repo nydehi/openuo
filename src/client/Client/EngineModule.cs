@@ -14,6 +14,7 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
+
 using Client.Configuration;
 using Client.Diagnostics;
 using Client.Modules;
