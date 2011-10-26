@@ -14,9 +14,9 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using Client.Modules;
-using Client.Diagnostics;
 using Client.Configuration;
+using Client.Diagnostics;
+using Client.Modules;
 
 namespace Client
 {
@@ -25,6 +25,7 @@ namespace Client
         protected override void Initialize()
         {
             new DebugTraceListener { TraceLevel = TraceLevels.Verbose };
+            new DebugLogTraceListener("debug.log");
 
             Kernel.Bind<IConfigurationService>().To<ConfigurationService>().InSingletonScope();
         }
