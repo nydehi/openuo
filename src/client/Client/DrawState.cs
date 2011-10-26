@@ -1,12 +1,12 @@
 ﻿/***************************************************************************
- *   Copyright (c) 2010 OpenUO Software Team.
+ *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
  *   SVN revision information:
- *   $Author: $:
- *   $Date: $:
- *   $Revision: $:
- *   $Id: $:
+ *   $Author$:
+ *   $Date$:
+ *   $Revision$:
+ *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,7 +24,11 @@ namespace Client
 {
     public class DrawState
     {
-        private readonly VertexPositionColorTexture[] _vertices;
+        private readonly Stack<Matrix> _worldMatrixStack;
+        private readonly Stack<Matrix> _viewMatrixStack;
+        private readonly Stack<Matrix> _projectionMatrixStack;
+        private readonly List<Texture> _textures;
+        private readonly VertexPositionNormalTexture[] _vertices;
         private readonly ushort[] _indices;
 
         private TimeSpan _totalGameTime;
@@ -32,11 +36,9 @@ namespace Client
         private bool _isRunningSlowly;
         private Device _device;
         private ICamera _camera;
-        private Stack<Matrix> _worldMatrixStack;
-        private Stack<Matrix> _viewMatrixStack;
-        private Stack<Matrix> _projectionMatrixStack;
 
-        private List<Texture> _textures;
+        private int _drawCalls;
+
         private int _currentVertex;
 
         public Device Device
@@ -159,6 +161,10 @@ namespace Client
             }
         }
 
+        public int DrawCalls
+        {
+            get { return _drawCalls; }
+        }
 
         public DrawState()
         {
@@ -171,7 +177,7 @@ namespace Client
             _projectionMatrixStack.Push(Matrix.Identity);
 
             _textures = new List<Texture>();
-            _vertices = new VertexPositionColorTexture[16384];
+            _vertices = new VertexPositionNormalTexture[65536];
 
             for (int i = 0; i < _vertices.Length; i += 4)
             {
@@ -181,7 +187,17 @@ namespace Client
                 _vertices[i + 3].TextureCoordinate = new Vector2(1, 1);
             }
 
-            _indices = new ushort[] { 0, 1, 2, 2, 1, 3 };
+            _indices = new ushort[30];
+
+            for (int i = 0; i < 25; i++)
+            {
+                _indices[(i * 6) + 0] = (ushort)((i * 4) + 0);
+                _indices[(i * 6) + 1] = (ushort)((i * 4) + 1);
+                _indices[(i * 6) + 2] = (ushort)((i * 4) + 2);
+                _indices[(i * 6) + 3] = (ushort)((i * 4) + 2);
+                _indices[(i * 6) + 4] = (ushort)((i * 4) + 1);
+                _indices[(i * 6) + 5] = (ushort)((i * 4) + 3);
+            }
         }
 
         internal void Reset()
@@ -193,6 +209,8 @@ namespace Client
             _worldMatrixStack.Push(Matrix.Identity);
             _viewMatrixStack.Push(Matrix.Identity);
             _projectionMatrixStack.Push(Matrix.Identity);
+
+            _drawCalls = 0;
         }
 
         public void PushWorld(Matrix world)
@@ -272,21 +290,36 @@ namespace Client
             if (_currentVertex == 0)
                 return;
 
-            using (VertexDeclaration vertexDeclaration = new VertexDeclaration(_device, VertexPositionColorTexture.VertexElements))
-            using (VertexBuffer vertexBuffer = new VertexBuffer(_device, _vertices.Length * VertexPositionColorTexture.SizeInBytes, Usage.WriteOnly, VertexFormat.None, Pool.Managed))
+            using (VertexDeclaration vertexDeclaration = new VertexDeclaration(_device, VertexPositionNormalTexture.VertexElements))
+            using (VertexBuffer vertexBuffer = new VertexBuffer(_device, _vertices.Length * VertexPositionNormalTexture.SizeInBytes, Usage.WriteOnly, VertexFormat.None, Pool.Managed))
             using (IndexBuffer indexBuffer = new IndexBuffer(_device, sizeof(ushort) * _indices.Length, Usage.WriteOnly, Pool.Managed, true))
             {
                 vertexBuffer.Lock(0, 0, LockFlags.None).WriteRange(_vertices);
                 indexBuffer.Lock(0, 0, LockFlags.None).WriteRange(_indices);
 
                 _device.VertexDeclaration = vertexDeclaration;
-                _device.SetStreamSource(0, vertexBuffer, 0, VertexPositionColorTexture.SizeInBytes);
+                _device.SetStreamSource(0, vertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
                 _device.Indices = indexBuffer;
 
-                for (int i = 0; i < _textures.Count; i++)
+                int batches;
+
+                for (int i = 0; i < _textures.Count; i += batches)
                 {
-                    _device.SetTexture(0, _textures[i]);
-                    _device.DrawIndexedPrimitive(PrimitiveType.TriangleList, i * 4, 0, 4, 0, 2);
+                    Texture texture = _textures[i];
+
+                    batches = 1;
+                    int ix = i + batches;
+
+                    while ((ix < _textures.Count && batches < 5) && texture == _textures[ix])
+                    {
+                        batches++;
+                        ix++;
+                    }
+
+                    _device.SetTexture(0, texture);
+                    _device.DrawIndexedPrimitive(PrimitiveType.TriangleList, i * 4, 0, batches * 4, 0, batches * 2);
+
+                    _drawCalls++;
                 }
             }
 
