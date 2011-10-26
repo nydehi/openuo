@@ -18,7 +18,7 @@ pause
 @echo Building...
 @echo.
 
-%SYSTEMROOT%\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe /p:Configuration=Release /p:Optimize=true /p:DebugSymbols=false /p:Platform="Any CPU" /verbosity:minimal .\..\src\client\client.sln
+%SYSTEMROOT%\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe /p:Configuration=Release /p:Optimize=true /p:DebugSymbols=false  /verbosity:minimal .\..\src\client\client.sln
 
 REM @echo.
 REM @echo Merging...(this may take a few minutes)
