@@ -189,7 +189,7 @@ namespace Client
 
             _indices = new ushort[30];
 
-            for (int i = 0; i < 25; i++)
+            for (int i = 0; i < 5; i++)
             {
                 _indices[(i * 6) + 0] = (ushort)((i * 4) + 0);
                 _indices[(i * 6) + 1] = (ushort)((i * 4) + 1);
