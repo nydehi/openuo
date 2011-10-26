@@ -25,6 +25,7 @@ namespace Client.Graphics
         Vector2 Position { get; set; }
         Vector2 HalfVector { get; }
         Matrix Projection { get; }
+        BoundingFrustum BoundingFrustum { get; }
         //Matrix View { get; }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using SharpDX.Direct3D9;
+using SharpDX;
+using Client.Graphics;
 
 namespace Client.Ultima
 {
@@ -42,12 +44,13 @@ namespace Client.Ultima
             for (int i = 0; i < height; ++i)
                 lookups[i] = (int)(start + (bin.ReadUInt16() * 2));
 
-            Texture texture = new Texture(engine.Device, width, height, 0, Usage.None, Format.A8R8G8B8, Pool.Managed);
-            IntPtr dataPtr = texture.LockRectangle(0, LockFlags.None).DataPointer;
+            Texture texture = new Texture(engine.Device, width, height, 0, Usage.None, Format.A1R5G5B5, Pool.Managed);
+            DataRectangle rect = texture.LockRectangle(0, LockFlags.None);
 
-            ushort* line = (ushort*)dataPtr;
+            ushort* line = (ushort*)rect.DataPointer;
+            int delta = rect.Pitch >> 1;
 
-            for (int y = 0; y < height; ++y, line += width)
+            for (int y = 0; y < height; ++y, line += delta)
             {
                 bin.BaseStream.Seek(lookups[y], SeekOrigin.Begin);
 

@@ -33,6 +33,21 @@ namespace Client.Graphics
         private Vector2 _halfVector;
         private Matrix _view;
         private Matrix _projection;
+        private BoundingFrustum _boundingFrustum;
+
+        public BoundingFrustum BoundingFrustum
+        {
+            get
+            {
+                if (_boundingFrustumDirty)
+                {
+                    _boundingFrustumDirty = false;
+                    _boundingFrustum = new BoundingFrustum(Projection);
+                }
+
+                return _boundingFrustum;
+            }
+        }
 
         public Matrix Projection
         {

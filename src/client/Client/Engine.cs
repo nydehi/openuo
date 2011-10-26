@@ -97,8 +97,6 @@ namespace Client
             Direct3D direct3D = new Direct3D();
 
             _form = new RenderForm("OpenUO - A truely open Ultima Online client");
-            _form.Size = new System.Drawing.Size(100, 100);
-            _form.UserResized += _form_UserResized;
 
             _presentParameters = new PresentParameters();
             _presentParameters.BackBufferFormat = Format.X8R8G8B8;
@@ -110,30 +108,20 @@ namespace Client
             _presentParameters.EnableAutoDepthStencil = true;
             _presentParameters.AutoDepthStencilFormat = Format.D24S8;
             _presentParameters.PresentFlags = PresentFlags.DiscardDepthStencil;
-            _presentParameters.PresentationInterval = PresentInterval.Default;
+            _presentParameters.PresentationInterval = PresentInterval.Immediate;
             _presentParameters.Windowed = true;
             _presentParameters.DeviceWindowHandle = _form.Handle;
 
             _device = new Device(direct3D, 0, DeviceType.Hardware, _form.Handle, CreateFlags.HardwareVertexProcessing, _presentParameters);
             _kernel = kernel;
+            _textureFactory = new TextureFactory(this);
             _totalGameTime = TimeSpan.Zero;
             _lastFrameElapsedGameTime = TimeSpan.Zero;
             _drawState = new DrawState();
             _updateState = new UpdateState();
             _clock = new GameClock();
         }
-
-        void _form_UserResized(object sender, EventArgs e)
-        {
-            if (_form.WindowState == FormWindowState.Minimized)
-                return;
-
-            _presentParameters.BackBufferWidth = _form.ClientSize.Width;
-            _presentParameters.BackBufferHeight = _form.ClientSize.Height;
-
-            _device.Reset(ref _presentParameters);
-        }
-
+        
         ~Engine()
         {
             Dispose(false);
@@ -239,13 +227,16 @@ namespace Client
 
         private void Draw(DrawState state)
         {
-            if (_textureFactory == null)
-                _textureFactory = new TextureFactory(this);
+            state.Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
 
-            state.PushProjection(_camera.Projection);
+            state.Device.BeginScene();
 
             state.Device.SetRenderState(RenderState.AlphaBlendEnable, true);
             state.Device.SetRenderState(RenderState.AlphaTestEnable, true);
+            state.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+            state.Device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+
+            state.PushProjection(_camera.Projection);
 
             _shader.Begin(state);
 
@@ -253,6 +244,9 @@ namespace Client
             Vector2 cameraPosition = state.Camera.Position + cameraOffset;
             Vector2 viewSize = new Vector2(_presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight);
             Vector2 tileCounts = new Vector2(viewSize.X / 22, viewSize.Y / 22);
+
+            System.Drawing.RectangleF bounds =
+                new System.Drawing.RectangleF(-(viewSize.X / 2), -(viewSize.Y / 2), viewSize.X, viewSize.Y);
 
             Tile centerTile = _maps.Felucca.Tiles.GetLandTile((int)cameraPosition.X, (int)cameraPosition.Y);
             int centerTileZ = centerTile._z * 4;
@@ -276,7 +270,7 @@ namespace Client
                 offset.X = widthInPixels + (((-tileCounts.X) + (startY - y)) * TileStepY);
                 offset.Y = heightInPixels + ((tileCounts.Y) + (startY - y)) * TileStepY;
 
-                //BoundingBox bb;
+                BoundingBox bb;
 
                 for (int x = startX; x < endX; x++)
                 {
@@ -285,9 +279,6 @@ namespace Client
                     Tile southTile = _maps.Felucca.Tiles.GetLandTile(x, y + 1);
                     Tile southEastTile = _maps.Felucca.Tiles.GetLandTile(x + 1, y + 1);
 
-                    offset.X += TileStepX;
-                    offset.Y -= TileStepY;
-
                     tileZ = (tile._z * 4) + centerTileZ;
                     eastTileZ = (eastTile._z * 4) + centerTileZ;
                     southTileZ = (southTile._z * 4) + centerTileZ;
@@ -295,7 +286,7 @@ namespace Client
 
                     center.X = offset.X;
                     center.Y = offset.Y;
-
+                    
                     northVector.X = center.X;
                     northVector.Y = center.Y + TileSizeOver2 + tileZ;
 
@@ -308,43 +299,48 @@ namespace Client
                     southVector.X = center.X;
                     southVector.Y = (center.Y - TileSizeOver2) + southEastTileZ;
 
-                    //bb.Max = new Vector3(eastVector.X, southVector.Y, float.MinValue);
-                    //bb.Max = new Vector3(eastVector.X, southVector.Y, float.MinValue);
+                    bb.Minimum = new Vector3(eastVector.X, southVector.Y, float.MinValue);
+                    bb.Maximum = new Vector3(westVector.X, northVector.Y, float.MaxValue);
 
-                    //if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
-                    state.DrawQuad(ref northVector, ref eastVector, ref westVector, ref southVector, _textureFactory.CreateLand(this, tile._id));
+                    if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
+                        state.DrawQuad(ref northVector, ref eastVector, ref westVector, ref southVector, _textureFactory.CreateLand(this, tile._id));
 
-                    //HuedTile[] statics = _maps.Felucca.Tiles.GetStaticTiles(x, y);
+                    HuedTile[] statics = _maps.Felucca.Tiles.GetStaticTiles(x, y);
 
-                    //for (int i = 0; i < statics.Length; i++)
-                    //{
-                    //    HuedTile s = statics[i];
-                    //    Texture2D texture = _textureFactory.CreateStatic(s._id);
+                    for (int i = 0; i < statics.Length; i++)
+                    {
+                        HuedTile s = statics[i];
+                        Texture texture = _textureFactory.CreateStatic(this, s._id);
 
-                    //    int staticHeight = s._z * 4 + centerTileZ - 22;
+                        SurfaceDescription description = texture.GetLevelDescription(0);
 
-                    //    int height = texture.Height;
-                    //    int width = texture.Width;
-                    //    int widthOver2 = width / 2;
+                        int staticHeight = s._z * 4 + centerTileZ - 22;
 
-                    //    northVector.X = center.X - widthOver2;
-                    //    northVector.Y = center.Y + height + staticHeight;
+                        int height = description.Height;
+                        int width = description.Width;
+                        int widthOver2 = width / 2;
 
-                    //    eastVector.X = center.X - widthOver2;
-                    //    eastVector.Y = center.Y + staticHeight;
+                        northVector.X = center.X - widthOver2;
+                        northVector.Y = center.Y + height + staticHeight;
 
-                    //    westVector.X = center.X + widthOver2;
-                    //    westVector.Y = center.Y + height + staticHeight;
+                        eastVector.X = center.X - widthOver2;
+                        eastVector.Y = center.Y + staticHeight;
 
-                    //    southVector.X = center.X + widthOver2;
-                    //    southVector.Y = center.Y + staticHeight;
+                        westVector.X = center.X + widthOver2;
+                        westVector.Y = center.Y + height + staticHeight;
 
-                    //    bb.Min = new Vector3(eastVector.X, southVector.Y, float.MinValue);
-                    //    bb.Max = new Vector3(westVector.X, northVector.Y, float.MaxValue);
+                        southVector.X = center.X + widthOver2;
+                        southVector.Y = center.Y + staticHeight;
 
-                    //    if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
-                    //        state.DrawQuad(ref northVector, ref eastVector, ref westVector, ref southVector, texture);
-                    //}
+                        bb.Minimum = new Vector3(eastVector.X, southVector.Y, 0);
+                        bb.Maximum = new Vector3(westVector.X, northVector.Y, 0);
+
+                        if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
+                            state.DrawQuad(ref northVector, ref eastVector, ref westVector, ref southVector, texture);
+                    }
+
+                    offset.X += TileStepX;
+                    offset.Y -= TileStepY;
                 }
             }
 
@@ -352,6 +348,9 @@ namespace Client
             state.PopProjection();
 
             _shader.End();
+
+            _device.EndScene();
+            _device.Present();
         }
 
         private void EndDraw()
@@ -394,13 +393,7 @@ namespace Client
                     _drawState.Camera = _camera;
                     _drawState.Reset();
 
-                    _device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.CornflowerBlue, 1.0f, 0);
-                    _device.BeginScene();
-
                     Draw(_drawState);
-
-                    _device.EndScene();
-                    _device.Present();
 
                     EndDraw();
                 }
