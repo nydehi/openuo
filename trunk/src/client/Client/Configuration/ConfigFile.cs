@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -39,10 +35,7 @@ namespace Client.Configuration
             _filename = filename;
             _sections = new Dictionary<string, Dictionary<string, string>>();
 
-            if (Exists)
-            {
-                LoadSettings();
-            }
+            Reload();
         }
 
         private void LoadSettings()
@@ -168,6 +161,12 @@ namespace Client.Configuration
             Dictionary<string, string> sectionTable = _sections[section];
 
             return !sectionTable.ContainsKey(key) ? defaultValue : sectionTable[key].ConvertTo<T>();
+        }
+
+        public void Reload()
+        {
+            if (File.Exists(_filename))
+                LoadSettings();
         }
     }
 }

@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -15,6 +11,7 @@
  ***************************************************************************/
 
 using System.Collections.Generic;
+using Client.Core;
 
 namespace Client
 {

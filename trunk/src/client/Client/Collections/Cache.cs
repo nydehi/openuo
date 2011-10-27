@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -49,6 +45,8 @@ namespace Client.Collections
         {
             foreach (var cacheItem in _internalCache.Values)
                 cacheItem.Dispose();
+
+            _internalCache.Clear();
         }
 
         public U this[T index]

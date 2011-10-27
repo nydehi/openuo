@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -56,7 +52,8 @@ namespace Client.Diagnostics
                 {
                     string directory = Path.GetDirectoryName(_filename);
 
-                    FileSystemHelper.EnsureDirectoryExists(directory);
+                    if(!string.IsNullOrWhiteSpace(directory))
+                        FileSystemHelper.EnsureDirectoryExists(directory);
 
                     using (StreamWriter writer = new StreamWriter(_filename))
                     {

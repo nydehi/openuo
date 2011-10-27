@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -21,8 +17,10 @@ using Client.Ultima;
 using SharpDX.Direct3D9;
 using SharpDX;
 using SharpDX.Direct3D;
+using Ninject;
+using Client.Cores;
 
-namespace Client.Graphics
+namespace Client.Core.Graphics
 {
     public enum TextureType
     {
@@ -30,15 +28,17 @@ namespace Client.Graphics
         Static
     }
 
-    public class TextureFactory : ITexturFactory, IUpdate
+    public class TextureFactory : ITextureFactory 
     {
         private readonly TimeSpan _cleanInterval = TimeSpan.FromMinutes(1);
-        private readonly Texture _missingTexture;
         private readonly Cache<int, Texture> _landCache;
         private readonly Cache<int, Texture> _staticCache;
         private readonly Textures _textures;
         private readonly Art _art;
         private readonly Hues _hues;
+        private readonly Engine _engine;
+
+        private Texture _missingTexture;
         private DateTime _lastCacheClean;
 
         public Cache<int, Texture> LandCache
@@ -48,7 +48,7 @@ namespace Client.Graphics
 
         public TextureFactory(Engine engine)
         {
-            _missingTexture = Texture.FromMemory(engine.Device, Resources.MissingTexture);
+            _engine = engine;
             _landCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x1000);
             _staticCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x10000);
             _lastCacheClean = DateTime.MinValue;
@@ -101,6 +101,28 @@ namespace Client.Graphics
 
             _landCache.Clean();
             _lastCacheClean = now;
+        }
+
+        public void CreateResources()
+        {
+            _missingTexture = Texture.FromMemory(_engine.Device, Resources.MissingTexture);
+        }
+
+        public void Dispose()
+        {
+            _landCache.Dispose();
+            _staticCache.Dispose();
+            _missingTexture.Dispose();
+        }
+        
+        public void OnDeviceLost()
+        {
+
+        }
+
+        public void OnDeviceReset()
+        {
+
         }
     }
 }

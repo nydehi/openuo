@@ -2,7 +2,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -11,23 +11,14 @@
  ***************************************************************************/
 
 using System;
-using Ninject;
-using Client.Core;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace Client
+namespace Client.Core.Graphics
 {
-    static class Program
+    public interface IRender : IResourceContainer
     {
-        [STAThread]
-        static void Main()
-        {
-            EngineBootstrapper boostrapper = new EngineBootstrapper();
-            boostrapper.Run();
-
-            using (Engine engine = new Engine(boostrapper.Kernel))
-            {
-                engine.Run();
-            }
-        }
+        void Render(DrawState state);
     }
 }

@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -14,18 +10,14 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using SharpDX;
+using SharpDX.Direct3D9;
+using Client.Cores;
 
-namespace Client.Graphics
+namespace Client.Core.Graphics
 {
-    public interface ICamera
+    public interface ITextureFactory : IUpdate, IResourceContainer
     {
-        int FarClip { get; set; }
-        int NearClip { get; set; }
-        Vector2 Position { get; set; }
-        Vector2 HalfVector { get; }
-        Matrix Projection { get; }
-        BoundingFrustum BoundingFrustum { get; }
-        //Matrix View { get; }
+        Texture CreateLand(Engine engine, int index);
+        Texture CreateStatic(Engine engine, int index);
     }
 }
