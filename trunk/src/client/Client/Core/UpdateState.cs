@@ -18,7 +18,6 @@ namespace Client.Core
     {
         private TimeSpan _totalGameTime;
         private TimeSpan _elapsedGameTime;
-        private bool _isRunningSlowly;
 
         public TimeSpan TotalGameTime
         {
@@ -30,12 +29,6 @@ namespace Client.Core
         {
             get { return _elapsedGameTime; }
             internal set { _elapsedGameTime = value; }
-        }
-
-        public bool IsRunningSlowly
-        {
-            get { return _isRunningSlowly; }
-            internal set { _isRunningSlowly = value; }
         }
     }
 }

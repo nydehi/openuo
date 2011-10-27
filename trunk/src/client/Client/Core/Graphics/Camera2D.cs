@@ -105,16 +105,16 @@ namespace Client.Core.Graphics
             _boundingFrustumDirty = true;
 
             _engine = engine;
-            _engine.RenderForm.UserResized += new System.EventHandler<System.EventArgs>(RenderForm_UserResized);
+            _engine.RenderForm.ResizeEnd += OnRenderFormResizeEnd;
 
-            _width = _engine.RenderForm.Width;
-            _height = engine.RenderForm.Height;
+            _width = _engine.RenderForm.ClientSize.Width;
+            _height = engine.RenderForm.ClientSize.Height;
         }
 
-        void RenderForm_UserResized(object sender, System.EventArgs e)
+        private void OnRenderFormResizeEnd(object sender, System.EventArgs e)
         {
-            _width = _engine.RenderForm.Width;
-            _height = _engine.RenderForm.Height;
+            _width = _engine.RenderForm.ClientSize.Width;
+            _height = _engine.RenderForm.ClientSize.Height;
             _halfVector = new Vector2(1f / _width, 1f / _height);
             _projectionDirty = true;
             _boundingFrustumDirty = true;

@@ -14,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using SharpDX;
 using SharpDX.Direct3D9;
-using Client.Core.Graphics;
 
 namespace Client.Core.Graphics
 {
@@ -29,6 +28,9 @@ namespace Client.Core.Graphics
         private Device _device;
         private ICamera _camera;
         private IRenderer _renderer;
+        private float _frameAccumulator;
+        private int _frameCount;
+        private float _framesPerSecond;
 
         public IRenderer Renderer
         {
@@ -201,6 +203,24 @@ namespace Client.Core.Graphics
         internal void Flush()
         {
             _renderer.Flush();
+        }
+
+        internal void BeginDraw()
+        {
+            _frameAccumulator += (float)_elapsedGameTime.TotalSeconds;
+            _frameCount++;
+
+            if (_frameAccumulator >= 1.0f)
+            {
+                _framesPerSecond = _frameCount / _frameAccumulator;
+                _frameAccumulator = 0.0f;
+                _frameCount = 0;
+            }
+        }
+
+        internal void EndDraw()
+        {
+
         }
     }
 }

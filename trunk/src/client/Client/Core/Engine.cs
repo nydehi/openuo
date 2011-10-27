@@ -11,20 +11,19 @@
  ***************************************************************************/
 
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Drawing;
-using Client.Diagnostics;
+using System.Windows.Forms;
 using Client.Core.Graphics;
 using Client.Core.Graphics.Shaders;
+using Client.Cores;
+using Client.Diagnostics;
 using Client.Ultima;
 using Ninject;
 using SharpDX;
 using SharpDX.Diagnostics;
 using SharpDX.Direct3D9;
 using SharpDX.Windows;
-using System.Collections.Generic;
-using Client.Cores;
-using System.Windows.Forms;
 
 namespace Client.Core
 {
@@ -48,27 +47,27 @@ namespace Client.Core
         private readonly DeviceEx _device;
         private readonly RenderForm _form;
         private readonly IRenderer _renderer;
+        private readonly ITextureFactory _textureFactory;
+
+        private readonly List<IResourceContainer> _resouces;
+        private readonly List<IUpdate> _updatables;
+        private readonly List<IRender> _renderables;
 
         private PresentParameters _presentParameters;
 
         private int _targetFrameRate;
 
-        private bool _drawRunningSlowly;
         private bool _doneFirstUpdate;
         private bool _shouldStop;
         private bool _deviceLost;
+        private bool _isFormResizing;
 
         private TimeSpan _totalGameTime;
         private TimeSpan _lastFrameTotalGameTime;
         private TimeSpan _lastFrameElapsedGameTime;
 
-        private List<IResourceContainer> _resouces;
-        private List<IUpdate> _updatables;
-        private List<IRender> _renderables;
-
+        private Texture _renderTarget;
         private Camera2D _camera;
-        //private IInputService _inputService;
-        private TextureFactory _textureFactory;
         private DiffuseShader _shader;
         private Maps _maps;
 
@@ -107,9 +106,12 @@ namespace Client.Core
 
             IDeviceProvider deviceProvider = kernel.Get<IDeviceProvider>();
 
-            _device = new DeviceEx(deviceProvider.Device.NativePointer);
             _form = deviceProvider.RenderForm;
-            _form.UserResized += new EventHandler<EventArgs>(_form_UserResized);
+            _form.ResizeBegin += OnResizeBegin;
+            _form.ResizeEnd += OnResizeEnd;
+            _form.FormClosed += OnFormClosed;
+
+            _device = new DeviceEx(deviceProvider.Device.NativePointer);
             _presentParameters = deviceProvider.PresentParameters;
             _renderer = _kernel.Get<IRenderer>();
             _textureFactory = new TextureFactory(this);
@@ -123,8 +125,15 @@ namespace Client.Core
             Bind(_textureFactory);
         }
 
-        void _form_UserResized(object sender, EventArgs e)
+        private void OnFormClosed(object sender, FormClosedEventArgs e)
         {
+            _shouldStop = true;
+        }
+
+        private void OnResizeEnd(object sender, EventArgs e)
+        {
+            _isFormResizing = false;
+
             if (_form.WindowState == FormWindowState.Minimized)
                 return;
 
@@ -149,37 +158,42 @@ namespace Client.Core
             OnDeviceReset();
         }
 
-        private void Bind(object toBind)
+        private void OnResizeBegin(object sender, EventArgs e)
         {
-            IResourceContainer resource = toBind as IResourceContainer;
+            _isFormResizing = true;
+        }
+
+        private void Bind(object obj)
+        {
+            IResourceContainer resource = obj as IResourceContainer;
 
             if (resource != null)
                 _resouces.Add(resource);
 
-            IRender renderable = toBind as IRender;
+            IRender renderable = obj as IRender;
 
             if (renderable != null)
                 _renderables.Add(renderable);
 
-            IUpdate updatable = toBind as IUpdate;
+            IUpdate updatable = obj as IUpdate;
 
             if (updatable != null)
                 _updatables.Add(updatable);
         }
 
-        private void Release(object toRelease)
+        private void Release(object obj)
         {
-            IResourceContainer resource = toRelease as IResourceContainer;
+            IResourceContainer resource = obj as IResourceContainer;
 
             if (resource != null)
                 _resouces.Remove(resource);
 
-            IRender renderable = toRelease as IRender;
+            IRender renderable = obj as IRender;
 
             if (renderable != null)
                 _renderables.Remove(renderable);
 
-            IUpdate updatable = toRelease as IUpdate;
+            IUpdate updatable = obj as IUpdate;
 
             if (updatable != null)
                 _updatables.Remove(updatable);
@@ -204,13 +218,13 @@ namespace Client.Core
                 Initialize();
 
                 _updateState.ElapsedGameTime = TimeSpan.Zero;
-                _updateState.TotalGameTime = _totalGameTime;
-                _updateState.IsRunningSlowly = false;
+                _updateState.TotalGameTime = TimeSpan.Zero;
 
                 Update(_updateState);
 
                 _doneFirstUpdate = true;
 
+                Tracer.Info("Running Game Loop...");
                 RenderLoop.Run(_form, Tick);
             }
             catch (SharpDXException ex)
@@ -248,14 +262,14 @@ namespace Client.Core
 
             _updateState.ElapsedGameTime = elapsedTime;
             _updateState.TotalGameTime = _totalGameTime;
-            _updateState.IsRunningSlowly = _drawRunningSlowly;
 
             Update(_updateState);
 
             _lastFrameElapsedGameTime = elapsedTime;
             _lastFrameTotalGameTime = _totalGameTime;
 
-            DrawFrame();
+            if (!_isFormResizing)
+                DrawFrame();
         }
 
         private void Initialize()
@@ -275,8 +289,11 @@ namespace Client.Core
             //_renderer = new Renderer(this);
 
             Tracer.Info("Initializing Resources...");
+
             foreach (IResourceContainer resource in _resouces)
                 resource.CreateResources();
+
+            _renderTarget = new Texture(_device, _presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight, 0, Usage.RenderTarget, Format.A8B8G8R8, Pool.Default);
         }
 
         private void Update(UpdateState state)
@@ -293,12 +310,15 @@ namespace Client.Core
         {
             state.Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
 
-            state.Device.BeginScene();
+            //Surface renderTargetSurface = _renderTarget.GetSurfaceLevel(0);
+            //Surface backBufferSurface = state.Device.GetRenderTarget(0);
 
+            state.Device.BeginScene();
             state.Device.SetRenderState(RenderState.AlphaBlendEnable, true);
             state.Device.SetRenderState(RenderState.AlphaTestEnable, true);
             state.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
             state.Device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+            //state.Device.SetRenderTarget(0, renderTargetSurface);
 
             state.PushProjection(_camera.Projection);
 
@@ -308,9 +328,6 @@ namespace Client.Core
             Vector2 cameraPosition = state.Camera.Position + cameraOffset;
             Vector2 viewSize = new Vector2(_presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight);
             Vector2 tileCounts = new Vector2(viewSize.X / 22, viewSize.Y / 22);
-
-            System.Drawing.RectangleF bounds =
-                new System.Drawing.RectangleF(-(viewSize.X / 2), -(viewSize.Y / 2), viewSize.X, viewSize.Y);
 
             Tile centerTile = _maps.Felucca.Tiles.GetLandTile((int)cameraPosition.X, (int)cameraPosition.Y);
             int centerTileZ = centerTile._z * 4;
@@ -324,7 +341,6 @@ namespace Client.Core
             int endY = (int)(cameraPosition.Y + tileCounts.Y);
 
             Vector2 offset, northVector, eastVector, westVector, southVector, center;
-            int tileZ, eastTileZ, southTileZ, southEastTileZ;
 
             float widthInPixels = tileCounts.X * TileStepX;
             float heightInPixels = tileCounts.Y * TileStepY;
@@ -343,10 +359,10 @@ namespace Client.Core
                     Tile southTile = _maps.Felucca.Tiles.GetLandTile(x, y + 1);
                     Tile southEastTile = _maps.Felucca.Tiles.GetLandTile(x + 1, y + 1);
 
-                    tileZ = (tile._z * 4) + centerTileZ;
-                    eastTileZ = (eastTile._z * 4) + centerTileZ;
-                    southTileZ = (southTile._z * 4) + centerTileZ;
-                    southEastTileZ = (southEastTile._z * 4) + centerTileZ;
+                    int tileZ = (tile._z * 4) + centerTileZ;
+                    int eastTileZ = (eastTile._z * 4) + centerTileZ;
+                    int southTileZ = (southTile._z * 4) + centerTileZ;
+                    int southEastTileZ = (southEastTile._z * 4) + centerTileZ;
 
                     center.X = offset.X;
                     center.Y = offset.Y;
@@ -426,8 +442,10 @@ namespace Client.Core
         {
             foreach (IResourceContainer resource in _resouces)
                 resource.OnDeviceReset();
+
+            _renderTarget = new Texture(_device, _presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight, 0, Usage.RenderTarget, Format.A8B8G8R8, Pool.Default);
         }
-        
+
         private void OnDeviceLost()
         {
             foreach (IResourceContainer resource in _resouces)
@@ -449,7 +467,7 @@ namespace Client.Core
         {
             try
             {
-                if(_deviceLost)
+                if (_deviceLost)
                 {
                     _device.ResetEx(ref _presentParameters);
                     _deviceLost = false;
@@ -466,14 +484,16 @@ namespace Client.Core
                     _drawState.Renderer = _renderer;
                     _drawState.Reset();
 
+                    _drawState.BeginDraw();
                     Draw(_drawState);
+                    _drawState.EndDraw();
 
                     EndDraw();
                 }
             }
             catch (SharpDXException e)
             {
-                if(_device.CheckDeviceState(_form.Handle) == DeviceState.DeviceLost)
+                if (_device.CheckDeviceState(_form.Handle) == DeviceState.DeviceLost)
                 {
                     OnDeviceLost();
                     _deviceLost = true;
