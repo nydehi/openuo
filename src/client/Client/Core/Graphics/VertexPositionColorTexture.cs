@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -18,7 +14,7 @@ using System.Runtime.InteropServices;
 using SharpDX;
 using SharpDX.Direct3D9;
 
-namespace Client.Graphics
+namespace Client.Core.Graphics
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct VertexPositionColorTexture

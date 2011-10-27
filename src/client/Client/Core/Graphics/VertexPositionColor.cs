@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -14,25 +10,25 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
+using System.Runtime.InteropServices;
 using SharpDX;
 using SharpDX.Direct3D9;
 
 namespace Client.Graphics
 {
-    public struct VertexPositionNormalTexture
+    [StructLayout(LayoutKind.Sequential)]
+    public struct VertexPositionColorTexture
     {
-        public static readonly VertexElement[] VertexElements = new []
+        public static readonly VertexElement[] VertexElements = new[]
         {
-            new VertexElement(0, 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
-            new VertexElement(0, 12, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Normal, 0),
-            new VertexElement(0, 24, DeclarationType.Float2, DeclarationMethod.Default, DeclarationUsage.TextureCoordinate, 0),
+            new VertexElement(0, sizeof(float) * 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
+            new VertexElement(0, sizeof(float) * 3, DeclarationType.Float4, DeclarationMethod.Default, DeclarationUsage.Color, 0),
 			VertexElement.VertexDeclarationEnd
         };
 
-        public const int SizeInBytes = sizeof(float) * 8;
+        public const int SizeInBytes = sizeof(float) * 7;
 
         public Vector3 Position;
-        public Vector3 Normal;
-        public Vector2 TextureCoordinate;
+        public Color4 Color;
     }
 }

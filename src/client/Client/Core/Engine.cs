@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -18,16 +14,19 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using Client.Diagnostics;
-using Client.Graphics;
-using Client.Graphics.Shaders;
+using Client.Core.Graphics;
+using Client.Core.Graphics.Shaders;
 using Client.Ultima;
 using Ninject;
 using SharpDX;
 using SharpDX.Diagnostics;
 using SharpDX.Direct3D9;
 using SharpDX.Windows;
+using System.Collections.Generic;
+using Client.Cores;
+using System.Windows.Forms;
 
-namespace Client
+namespace Client.Core
 {
     public class Engine : IDisposable
     {
@@ -46,8 +45,9 @@ namespace Client
         private readonly UpdateState _updateState;
         private readonly GameClock _clock;
         private readonly IKernel _kernel;
-        private readonly Device _device;
+        private readonly DeviceEx _device;
         private readonly RenderForm _form;
+        private readonly IRenderer _renderer;
 
         private PresentParameters _presentParameters;
 
@@ -56,10 +56,15 @@ namespace Client
         private bool _drawRunningSlowly;
         private bool _doneFirstUpdate;
         private bool _shouldStop;
+        private bool _deviceLost;
 
         private TimeSpan _totalGameTime;
         private TimeSpan _lastFrameTotalGameTime;
         private TimeSpan _lastFrameElapsedGameTime;
+
+        private List<IResourceContainer> _resouces;
+        private List<IUpdate> _updatables;
+        private List<IRender> _renderables;
 
         private Camera2D _camera;
         //private IInputService _inputService;
@@ -77,7 +82,7 @@ namespace Client
             get { return _kernel; }
         }
 
-        public Device Device
+        public DeviceEx Device
         {
             get { return _device; }
         }
@@ -94,9 +99,36 @@ namespace Client
 
         public Engine(IKernel kernel)
         {
-            Direct3D direct3D = new Direct3D();
+            _kernel = kernel;
 
-            _form = new RenderForm("OpenUO - A truely open Ultima Online client");
+            _resouces = new List<IResourceContainer>();
+            _updatables = new List<IUpdate>();
+            _renderables = new List<IRender>();
+
+            IDeviceProvider deviceProvider = kernel.Get<IDeviceProvider>();
+
+            _device = new DeviceEx(deviceProvider.Device.NativePointer);
+            _form = deviceProvider.RenderForm;
+            _form.UserResized += new EventHandler<EventArgs>(_form_UserResized);
+            _presentParameters = deviceProvider.PresentParameters;
+            _renderer = _kernel.Get<IRenderer>();
+            _textureFactory = new TextureFactory(this);
+            _totalGameTime = TimeSpan.Zero;
+            _lastFrameElapsedGameTime = TimeSpan.Zero;
+            _drawState = new DrawState();
+            _updateState = new UpdateState();
+            _clock = new GameClock();
+
+            Bind(_renderer);
+            Bind(_textureFactory);
+        }
+
+        void _form_UserResized(object sender, EventArgs e)
+        {
+            if (_form.WindowState == FormWindowState.Minimized)
+                return;
+
+            OnDeviceLost();
 
             _presentParameters = new PresentParameters();
             _presentParameters.BackBufferFormat = Format.X8R8G8B8;
@@ -112,14 +144,45 @@ namespace Client
             _presentParameters.Windowed = true;
             _presentParameters.DeviceWindowHandle = _form.Handle;
 
-            _device = new Device(direct3D, 0, DeviceType.Hardware, _form.Handle, CreateFlags.HardwareVertexProcessing, _presentParameters);
-            _kernel = kernel;
-            _textureFactory = new TextureFactory(this);
-            _totalGameTime = TimeSpan.Zero;
-            _lastFrameElapsedGameTime = TimeSpan.Zero;
-            _drawState = new DrawState();
-            _updateState = new UpdateState();
-            _clock = new GameClock();
+            _device.Reset(ref _presentParameters);
+
+            OnDeviceReset();
+        }
+
+        private void Bind(object toBind)
+        {
+            IResourceContainer resource = toBind as IResourceContainer;
+
+            if (resource != null)
+                _resouces.Add(resource);
+
+            IRender renderable = toBind as IRender;
+
+            if (renderable != null)
+                _renderables.Add(renderable);
+
+            IUpdate updatable = toBind as IUpdate;
+
+            if (updatable != null)
+                _updatables.Add(updatable);
+        }
+
+        private void Release(object toRelease)
+        {
+            IResourceContainer resource = toRelease as IResourceContainer;
+
+            if (resource != null)
+                _resouces.Remove(resource);
+
+            IRender renderable = toRelease as IRender;
+
+            if (renderable != null)
+                _renderables.Remove(renderable);
+
+            IUpdate updatable = toRelease as IUpdate;
+
+            if (updatable != null)
+                _updatables.Remove(updatable);
         }
 
         ~Engine()
@@ -211,8 +274,9 @@ namespace Client
             _shader = new DiffuseShader(this);
             //_renderer = new Renderer(this);
 
-            Tracer.Info("Loading Content...");
-            LoadContent();
+            Tracer.Info("Initializing Resources...");
+            foreach (IResourceContainer resource in _resouces)
+                resource.CreateResources();
         }
 
         private void Update(UpdateState state)
@@ -303,7 +367,7 @@ namespace Client
                     bb.Maximum = new Vector3(westVector.X, northVector.Y, float.MaxValue);
 
                     if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
-                        state.DrawQuad(ref northVector, ref eastVector, ref westVector, ref southVector, _textureFactory.CreateLand(this, tile._id));
+                        state.Renderer.RenderQuad(ref northVector, ref eastVector, ref westVector, ref southVector, _textureFactory.CreateLand(this, tile._id));
 
                     HuedTile[] statics = _maps.Felucca.Tiles.GetStaticTiles(x, y);
 
@@ -336,7 +400,7 @@ namespace Client
                         bb.Maximum = new Vector3(westVector.X, northVector.Y, 0);
 
                         if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
-                            state.DrawQuad(ref northVector, ref eastVector, ref westVector, ref southVector, texture);
+                            state.Renderer.RenderQuad(ref northVector, ref eastVector, ref westVector, ref southVector, texture);
                     }
 
                     offset.X += TileStepX;
@@ -351,10 +415,6 @@ namespace Client
 
             _device.EndScene();
             _device.Present();
-
-            float fps = 1f / (float)state.ElapsedGameTime.TotalSeconds;
-            Debug.WriteLine(string.Format("FPS: {0}", fps));
-            Debug.WriteLine(string.Format("Draw Calls: {0}", state.DrawCalls));
         }
 
         private void EndDraw()
@@ -362,25 +422,26 @@ namespace Client
 
         }
 
-        private void LoadContent()
+        private void OnDeviceReset()
         {
-
+            foreach (IResourceContainer resource in _resouces)
+                resource.OnDeviceReset();
         }
-
-        private void UnloadContent()
+        
+        private void OnDeviceLost()
         {
-
+            foreach (IResourceContainer resource in _resouces)
+                resource.OnDeviceLost();
         }
 
         private void Dispose(bool disposing)
         {
             if (disposing)
             {
-                lock (this)
-                {
-                    Tracer.Info("Unloading Content...");
-                    UnloadContent();
-                }
+                Tracer.Info("Disposing Resources...");
+
+                foreach (IResourceContainer resource in _resouces)
+                    resource.Dispose();
             }
         }
 
@@ -388,18 +449,34 @@ namespace Client
         {
             try
             {
+                if(_deviceLost)
+                {
+                    _device.ResetEx(ref _presentParameters);
+                    _deviceLost = false;
+                    OnDeviceReset();
+                    return;
+                }
+
                 if (_doneFirstUpdate && (BeginDraw()))
                 {
                     _drawState.TotalGameTime = _totalGameTime;
                     _drawState.ElapsedGameTime = _lastFrameElapsedGameTime;
-                    _drawState.IsRunningSlowly = _drawRunningSlowly;
                     _drawState.Device = _device;
                     _drawState.Camera = _camera;
+                    _drawState.Renderer = _renderer;
                     _drawState.Reset();
 
                     Draw(_drawState);
 
                     EndDraw();
+                }
+            }
+            catch (SharpDXException e)
+            {
+                if(_device.CheckDeviceState(_form.Handle) == DeviceState.DeviceLost)
+                {
+                    OnDeviceLost();
+                    _deviceLost = true;
                 }
             }
             finally

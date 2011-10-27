@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -13,7 +9,6 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
-
 
 namespace Client.Configuration
 {
@@ -28,5 +23,7 @@ namespace Client.Configuration
 
         //Section : Ultima Online
         public const string UltimaOnlineDirectory = "installdirectory";
+        public const string TexidxMulPath = "texidx.mul";
+        public const string TexmapsMulPath = "texmaps.mul";
     }
 }

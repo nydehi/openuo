@@ -10,24 +10,18 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using System;
-using Ninject;
-using Client.Core;
+using SharpDX;
 
-namespace Client
+namespace Client.Core.Graphics
 {
-    static class Program
+    public interface ICamera
     {
-        [STAThread]
-        static void Main()
-        {
-            EngineBootstrapper boostrapper = new EngineBootstrapper();
-            boostrapper.Run();
-
-            using (Engine engine = new Engine(boostrapper.Kernel))
-            {
-                engine.Run();
-            }
-        }
+        int FarClip { get; set; }
+        int NearClip { get; set; }
+        Vector2 Position { get; set; }
+        Vector2 HalfVector { get; }
+        Matrix Projection { get; }
+        BoundingFrustum BoundingFrustum { get; }
+        //Matrix View { get; }
     }
 }

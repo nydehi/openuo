@@ -2,7 +2,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -11,23 +11,18 @@
  ***************************************************************************/
 
 using System;
-using Ninject;
-using Client.Core;
+using SharpDX;
+using SharpDX.Direct3D9;
 
-namespace Client
+namespace Client.Core.Graphics
 {
-    static class Program
+    public interface IRenderer : IResourceContainer
     {
-        [STAThread]
-        static void Main()
-        {
-            EngineBootstrapper boostrapper = new EngineBootstrapper();
-            boostrapper.Run();
+        Vector2 MeasureString(Font font, string text);
+        void RenderString(Font font, string text, int x, int y, Color4 color);
+        void RenderLine(int x0, int y0, Color4 color0, int x1, int y1, Color4 color1);
+        void Flush();
 
-            using (Engine engine = new Engine(boostrapper.Kernel))
-            {
-                engine.Run();
-            }
-        }
+        void RenderQuad(ref Vector2 northVector, ref Vector2 eastVector, ref Vector2 westVector, ref Vector2 southVector, Texture texture);
     }
 }

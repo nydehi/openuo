@@ -10,24 +10,30 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using System;
 using Ninject;
-using Client.Core;
 
-namespace Client
+namespace Client.Core
 {
-    static class Program
+    public sealed class EngineBootstrapper
     {
-        [STAThread]
-        static void Main()
-        {
-            EngineBootstrapper boostrapper = new EngineBootstrapper();
-            boostrapper.Run();
+        public IKernel Kernel { get; private set; }
 
-            using (Engine engine = new Engine(boostrapper.Kernel))
-            {
-                engine.Run();
-            }
+        public void Run()
+        {
+            Kernel = new StandardKernel();
+
+            ConfigureKernel();
+            InitializeModules();
+        }
+
+        private void InitializeModules()
+        {
+            Kernel.Load(new EngineModule());
+        }
+
+        private void ConfigureKernel()
+        {
+
         }
     }
 }

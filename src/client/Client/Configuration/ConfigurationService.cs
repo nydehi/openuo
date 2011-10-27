@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -57,6 +53,11 @@ namespace Client.Configuration
         public void SetValue<T>(string section, string key, T value)
         {
             _configFile.SetValue(section, key, value);
+        }
+
+        public void Reload()
+        {
+            _configFile.Reload();
         }
     }
 }

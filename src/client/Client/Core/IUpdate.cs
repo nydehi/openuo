@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -14,21 +10,15 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
+using System;
+using System.Net;
+using System.Windows;
+using Client.Core;
 
-using Client.Configuration;
-using Client.Diagnostics;
-using Client.Modules;
-
-namespace Client
+namespace Client.Cores
 {
-    public class EngineModule : ModuleBase
+    public interface IUpdate
     {
-        protected override void Initialize()
-        {
-            new DebugTraceListener { TraceLevel = TraceLevels.Verbose };
-            new DebugLogTraceListener("debug.log");
-
-            Kernel.Bind<IConfigurationService>().To<ConfigurationService>().InSingletonScope();
-        }
+        void Update(UpdateState state);
     }
 }

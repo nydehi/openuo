@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +15,7 @@ using System.Collections;
 using SharpDX;
 using SharpDX.Direct3D9;
 
-namespace Client.Graphics.Shaders
+namespace Client.Core.Graphics.Shaders
 {
     public abstract class ShaderBase
     {

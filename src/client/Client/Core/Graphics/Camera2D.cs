@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -16,7 +12,7 @@
 
 using SharpDX;
 
-namespace Client.Graphics
+namespace Client.Core.Graphics
 {
     public class Camera2D : ICamera
     {

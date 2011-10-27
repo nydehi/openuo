@@ -2,10 +2,6 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   SVN revision information:
- *   $Author$:
- *   $Date$:
- *   $Revision$:
  *   $Id$:
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -14,30 +10,35 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using Ninject;
+using Client.Properties;
+using SharpDX;
 
-namespace Client
+namespace Client.Core.Graphics.Shaders
 {
-    public sealed class EngineBootstrapper
+    public class DiffuseShader : ShaderBase
     {
-        public IKernel Kernel { get; private set; }
-
-        public void Run()
+        public Matrix WorldViewProjection
         {
-            Kernel = new StandardKernel();
-
-            ConfigureKernel();
-            InitializeModules();
+            get;
+            set;
         }
 
-        private void InitializeModules()
+        public Vector2 HalfVector
         {
-            Kernel.Load(new EngineModule());
+            get;
+            set;
         }
 
-        private void ConfigureKernel()
+        public DiffuseShader(Engine engine)
+            : base(engine, Resources.DiffuseEffect)
         {
 
+        }
+
+        protected override void BeginOverride(DrawState state)
+        {
+            SetValue("WorldViewProjection", state.WorldViewProjection);
+            SetValue("HalfVector", state.Camera.HalfVector);
         }
     }
 }
