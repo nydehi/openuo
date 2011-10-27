@@ -12,17 +12,23 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using SharpDX.Direct3D9;
-using SharpDX;
 using Ninject;
+using SharpDX;
+using SharpDX.Direct3D9;
 
 namespace Client.Core.Graphics
 {
+
     public sealed class Renderer : IRenderer
     {
-        private readonly List<Texture> _textures;
+        private class TextureBatch
+        {
+            public Texture Texture;
+            public int BaseVertex;
+            public int VertexCount = 4;
+        }
+
+        private readonly List<TextureBatch> _textures;
         private readonly VertexPositionNormalTexture[] _vertices;
 
         private Device _device;
@@ -54,7 +60,7 @@ namespace Client.Core.Graphics
         public Renderer(IDeviceProvider provider)
         {
             _device = provider.Device;
-            _textures = new List<Texture>();
+            _textures = new List<TextureBatch>();
             _vertices = new VertexPositionNormalTexture[65536];
 
             for (int i = 0; i < _vertices.Length; i += 4)
@@ -68,7 +74,7 @@ namespace Client.Core.Graphics
 
         public void CreateResources()
         {
-            ushort[] indices = new ushort[6*20];
+            ushort[] indices = new ushort[6 * 20];
 
             int count = indices.Length / 6;
 
@@ -85,6 +91,15 @@ namespace Client.Core.Graphics
             _maxBatches = indices.Length / 6;
             _vertexDeclaration = new VertexDeclaration(_device, VertexPositionNormalTexture.VertexElements);
             _indexBuffer = new IndexBuffer(_device, sizeof(ushort) * indices.Length, Usage.WriteOnly, Pool.Managed, true);
+        }
+
+        public void OnDeviceLost()
+        {
+
+        }
+        public void OnDeviceReset()
+        {
+
         }
 
         public void Dispose()
@@ -111,29 +126,40 @@ namespace Client.Core.Graphics
             _vertices[_currentVertex + 3].Position.X = br.X;
             _vertices[_currentVertex + 3].Position.Y = br.Y;
 
+            int previousIndex = _textures.Count - 1;
+            TextureBatch batch;
+
+            if (_textures.Count > 0 && (batch = _textures[previousIndex]).Texture == texture)
+            {
+                batch.VertexCount += 4;
+            }
+            else
+            {
+                batch = new TextureBatch()
+                {
+                    BaseVertex = _currentVertex,
+                    Texture = texture
+                };
+
+                _textures.Add(batch);
+            }
+
             _currentVertex += 4;
-            _textures.Add(texture);
         }
 
-        public void RenderQuad(DrawState state, Vector2 v1, Vector2 v2, Texture texture)
+        public Vector2 MeasureString(Font font, string text)
         {
-            if (_currentVertex + 4 >= _vertices.Length)
-                Flush();
+            throw new NotImplementedException();
+        }
 
-            _vertices[_currentVertex + 0].Position.X = v1.X;
-            _vertices[_currentVertex + 0].Position.Y = v1.Y;
+        public void RenderString(Font font, string text, int x, int y, Color4 color)
+        {
+            throw new NotImplementedException();
+        }
 
-            _vertices[_currentVertex + 1].Position.X = v1.X;
-            _vertices[_currentVertex + 1].Position.Y = v2.Y;
-
-            _vertices[_currentVertex + 2].Position.X = v2.X;
-            _vertices[_currentVertex + 2].Position.Y = v1.Y;
-
-            _vertices[_currentVertex + 3].Position.X = v2.X;
-            _vertices[_currentVertex + 3].Position.Y = v2.Y;
-
-            _currentVertex += 4;
-            _textures.Add(texture);
+        public void RenderLine(int x0, int y0, Color4 color0, int x1, int y1, Color4 color1)
+        {
+            throw new NotImplementedException();
         }
 
         public void Flush()
@@ -151,26 +177,12 @@ namespace Client.Core.Graphics
 
                 int batches;
 
-                for (int i = 0; i < _textures.Count; i += batches)
+                for (int i = 0; i < _textures.Count; i++)
                 {
-                    Texture texture = _textures[i];
+                    TextureBatch batch = _textures[i];
 
-                    batches = 1;
-                    int ix = i + batches;
-
-                    while ((ix < _textures.Count && batches < _maxBatches) && texture == _textures[ix])
-                    {
-                        batches++;
-                        ix++;
-                    }
-
-                    if (batches > 1)
-                        _batchDraws++;
-
-                    _maxBatchCount = Math.Max(batches, _maxBatchCount);
-
-                    _device.SetTexture(0, texture);
-                    _device.DrawIndexedPrimitive(PrimitiveType.TriangleList, i * 4, 0, batches * 4, 0, batches * 2);
+                    _device.SetTexture(0, batch.Texture);
+                    _device.DrawIndexedPrimitive(PrimitiveType.TriangleList, batch.BaseVertex, 0, batch.VertexCount, 0, batch.VertexCount / 2);
 
                     _drawCalls++;
                 }
@@ -178,30 +190,6 @@ namespace Client.Core.Graphics
 
             _currentVertex = 0;
             _textures.Clear();
-        }
-
-        public Vector2 MeasureString(Font font, string text)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void RenderString(Font font, string text, int x, int y, Color4 color)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void RenderLine(int x0, int y0, Color4 color0, int x1, int y1, Color4 color1)
-        {
-            throw new NotImplementedException();
-        }
-        
-        public void OnDeviceLost()
-        {
-
-        }        
-        public void OnDeviceReset()
-        {
-
         }
     }
 }
