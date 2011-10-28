@@ -61,7 +61,7 @@ namespace Client.Core.Graphics
         {
             _device = provider.Device;
             _textures = new List<TextureBatch>();
-            _vertices = new VertexPositionNormalTexture[65536];
+            _vertices = new VertexPositionNormalTexture[16384];
 
             for (int i = 0; i < _vertices.Length; i += 4)
             {
@@ -91,12 +91,14 @@ namespace Client.Core.Graphics
             _maxBatches = indices.Length / 6;
             _vertexDeclaration = new VertexDeclaration(_device, VertexPositionNormalTexture.VertexElements);
             _indexBuffer = new IndexBuffer(_device, sizeof(ushort) * indices.Length, Usage.WriteOnly, Pool.Managed, true);
+            _indexBuffer.Lock(0, 0, LockFlags.None).WriteRange(indices, 0, indices.Length);
         }
 
         public void OnDeviceLost()
         {
 
         }
+
         public void OnDeviceReset()
         {
 
@@ -129,7 +131,7 @@ namespace Client.Core.Graphics
             int previousIndex = _textures.Count - 1;
             TextureBatch batch;
 
-            if (_textures.Count > 0 && (batch = _textures[previousIndex]).Texture == texture)
+            if (_textures.Count > 0 && (batch = _textures[previousIndex]).Texture == texture && batch.VertexCount < _maxBatches)
             {
                 batch.VertexCount += 4;
             }
@@ -174,7 +176,7 @@ namespace Client.Core.Graphics
                 _device.VertexDeclaration = _vertexDeclaration;
                 _device.SetStreamSource(0, vertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
                 _device.Indices = _indexBuffer;
-
+                
                 int batches;
 
                 for (int i = 0; i < _textures.Count; i++)

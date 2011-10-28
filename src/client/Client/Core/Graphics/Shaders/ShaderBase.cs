@@ -14,19 +14,22 @@ using System.Collections;
 
 using SharpDX;
 using SharpDX.Direct3D9;
+using System;
 
 namespace Client.Core.Graphics.Shaders
 {
-    public abstract class ShaderBase
+    public abstract class ShaderBase : IResourceContainer
     {
+        private readonly Engine _engine;
         private readonly Hashtable _effectHandles = new Hashtable();
-        private readonly Effect _effect;
-        private readonly EffectHandle _technique;
+        private readonly byte[] _effectData;
 
-        protected ShaderBase(Engine engine, byte[] _effectData)
+        private Effect _effect;  
+
+        protected ShaderBase(Engine engine, byte[] effectData)
         {
-            _effect = Effect.FromMemory(engine.Device, _effectData, ShaderFlags.None);
-            _technique = _effect.GetTechnique(0);
+            _engine = engine;
+            _effectData = effectData;
         }
 
         protected abstract void BeginOverride(DrawState state);
@@ -134,6 +137,26 @@ namespace Client.Core.Graphics.Shaders
         public void SetValue<T>(string name, T val) where T : struct
         {
             _effect.SetValue(name, val);
+        }
+
+        public void Dispose()
+        {
+            _effect.Dispose();            
+        }
+
+        public void CreateResources()
+        {
+            _effect = Effect.FromMemory(_engine.Device, _effectData, ShaderFlags.None);
+        }
+
+        public void OnDeviceLost()
+        {
+            _effect.Dispose();
+        }
+
+        public void OnDeviceReset()
+        {
+            CreateResources();
         }
     }
 }
