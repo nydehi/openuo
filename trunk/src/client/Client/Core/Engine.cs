@@ -46,8 +46,9 @@ namespace Client.Core
         private readonly IKernel _kernel;
         private readonly DeviceEx _device;
         private readonly RenderForm _form;
-        private readonly IRenderer _renderer;
-        private readonly ITextureFactory _textureFactory;
+
+        private IRenderer _renderer;
+        private ITextureFactory _textureFactory;
 
         private readonly List<IResourceContainer> _resouces;
         private readonly List<IUpdate> _updatables;
@@ -66,7 +67,6 @@ namespace Client.Core
         private TimeSpan _lastFrameTotalGameTime;
         private TimeSpan _lastFrameElapsedGameTime;
 
-        private Texture _renderTarget;
         private Camera2D _camera;
         private DiffuseShader _shader;
         private Maps _maps;
@@ -110,166 +110,20 @@ namespace Client.Core
             _form.ResizeBegin += OnResizeBegin;
             _form.ResizeEnd += OnResizeEnd;
             _form.FormClosed += OnFormClosed;
-
+            _form.Resize += new EventHandler(OnFormResize);
+            //_form.UserResized += OnFormUserResized;
             _device = new DeviceEx(deviceProvider.Device.NativePointer);
             _presentParameters = deviceProvider.PresentParameters;
-            _renderer = _kernel.Get<IRenderer>();
-            _textureFactory = new TextureFactory(this);
             _totalGameTime = TimeSpan.Zero;
             _lastFrameElapsedGameTime = TimeSpan.Zero;
             _drawState = new DrawState();
             _updateState = new UpdateState();
             _clock = new GameClock();
-
-            Bind(_renderer);
-            Bind(_textureFactory);
-        }
-
-        private void OnFormClosed(object sender, FormClosedEventArgs e)
-        {
-            _shouldStop = true;
-        }
-
-        private void OnResizeEnd(object sender, EventArgs e)
-        {
-            _isFormResizing = false;
-
-            if (_form.WindowState == FormWindowState.Minimized)
-                return;
-
-            OnDeviceLost();
-
-            _presentParameters = new PresentParameters();
-            _presentParameters.BackBufferFormat = Format.X8R8G8B8;
-            _presentParameters.BackBufferCount = 1;
-            _presentParameters.BackBufferWidth = _form.ClientSize.Width;
-            _presentParameters.BackBufferHeight = _form.ClientSize.Height;
-            _presentParameters.MultiSampleType = MultisampleType.None;
-            _presentParameters.SwapEffect = SwapEffect.Discard;
-            _presentParameters.EnableAutoDepthStencil = true;
-            _presentParameters.AutoDepthStencilFormat = Format.D24S8;
-            _presentParameters.PresentFlags = PresentFlags.DiscardDepthStencil;
-            _presentParameters.PresentationInterval = PresentInterval.Immediate;
-            _presentParameters.Windowed = true;
-            _presentParameters.DeviceWindowHandle = _form.Handle;
-
-            _device.Reset(ref _presentParameters);
-
-            OnDeviceReset();
-        }
-
-        private void OnResizeBegin(object sender, EventArgs e)
-        {
-            _isFormResizing = true;
-        }
-
-        private void Bind(object obj)
-        {
-            IResourceContainer resource = obj as IResourceContainer;
-
-            if (resource != null)
-                _resouces.Add(resource);
-
-            IRender renderable = obj as IRender;
-
-            if (renderable != null)
-                _renderables.Add(renderable);
-
-            IUpdate updatable = obj as IUpdate;
-
-            if (updatable != null)
-                _updatables.Add(updatable);
-        }
-
-        private void Release(object obj)
-        {
-            IResourceContainer resource = obj as IResourceContainer;
-
-            if (resource != null)
-                _resouces.Remove(resource);
-
-            IRender renderable = obj as IRender;
-
-            if (renderable != null)
-                _renderables.Remove(renderable);
-
-            IUpdate updatable = obj as IUpdate;
-
-            if (updatable != null)
-                _updatables.Remove(updatable);
         }
 
         ~Engine()
         {
             Dispose(false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        public void Run()
-        {
-            try
-            {
-                Tracer.Info("Initializing Engine...");
-                Initialize();
-
-                _updateState.ElapsedGameTime = TimeSpan.Zero;
-                _updateState.TotalGameTime = TimeSpan.Zero;
-
-                Update(_updateState);
-
-                _doneFirstUpdate = true;
-
-                Tracer.Info("Running Game Loop...");
-                RenderLoop.Run(_form, Tick);
-            }
-            catch (SharpDXException ex)
-            {
-                string errorMessage = ErrorManager.GetErrorMessage(ex.ResultCode.Code);
-
-                Tracer.Error(errorMessage);
-                Tracer.Error(ex);
-                throw;
-            }
-            catch (Exception e)
-            {
-                Tracer.Error(e);
-                throw;
-            }
-        }
-
-        public void Tick()
-        {
-            if (_shouldStop)
-                return;
-
-            _clock.Step();
-
-            TimeSpan elapsedTime = _clock.ElapsedTime;
-
-            if (elapsedTime < TimeSpan.Zero)
-                elapsedTime = TimeSpan.Zero;
-
-            _totalGameTime += elapsedTime;
-
-            TimeSpan tickDelta = _totalGameTime - _lastFrameTotalGameTime;
-
-            // TODO: Need to add vsync support.
-
-            _updateState.ElapsedGameTime = elapsedTime;
-            _updateState.TotalGameTime = _totalGameTime;
-
-            Update(_updateState);
-
-            _lastFrameElapsedGameTime = elapsedTime;
-            _lastFrameTotalGameTime = _totalGameTime;
-
-            if (!_isFormResizing)
-                DrawFrame();
         }
 
         private void Initialize()
@@ -279,46 +133,41 @@ namespace Client.Core
             _camera.FarClip = 1000;
             _camera.Position = new Vector2(1496, 1624);
 
-            //_inputService = (IInputService)Services.GetService(typeof(IInputService));
-            //_inputService.MouseMove += _inputService_MouseMove;
-            //_inputService.KeyDown += _inputService_KeyDown;
-
-            //_textureFactory = new TextureFactory(this);
             _maps = new Maps(this);
             _shader = new DiffuseShader(this);
-            //_renderer = new Renderer(this);
+            _renderer = _kernel.Get<IRenderer>();
+            _textureFactory = _kernel.Get<ITextureFactory>();
+
+            Bind(_shader);
+            Bind(_renderer);
+            Bind(_textureFactory);
 
             Tracer.Info("Initializing Resources...");
 
             foreach (IResourceContainer resource in _resouces)
                 resource.CreateResources();
-
-            _renderTarget = new Texture(_device, _presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight, 0, Usage.RenderTarget, Format.A8B8G8R8, Pool.Default);
         }
 
         private void Update(UpdateState state)
         {
+            foreach (IUpdate updatable in _updatables)
+                updatable.Update(state);
+        }
+
+        private void OnBeforeRender()
+        {
 
         }
 
-        private bool BeginDraw()
+        private void Render(DrawState state)
         {
-            return true;
-        }
-
-        private void Draw(DrawState state)
-        {
-            state.Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
-
-            //Surface renderTargetSurface = _renderTarget.GetSurfaceLevel(0);
-            //Surface backBufferSurface = state.Device.GetRenderTarget(0);
-
+            state.Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.CornflowerBlue, 1.0f, 0);
+            
             state.Device.BeginScene();
             state.Device.SetRenderState(RenderState.AlphaBlendEnable, true);
             state.Device.SetRenderState(RenderState.AlphaTestEnable, true);
             state.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
             state.Device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-            //state.Device.SetRenderTarget(0, renderTargetSurface);
 
             state.PushProjection(_camera.Projection);
 
@@ -433,37 +282,12 @@ namespace Client.Core
             _device.Present();
         }
 
-        private void EndDraw()
+        private void OnAfterRender()
         {
 
         }
 
-        private void OnDeviceReset()
-        {
-            foreach (IResourceContainer resource in _resouces)
-                resource.OnDeviceReset();
-
-            _renderTarget = new Texture(_device, _presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight, 0, Usage.RenderTarget, Format.A8B8G8R8, Pool.Default);
-        }
-
-        private void OnDeviceLost()
-        {
-            foreach (IResourceContainer resource in _resouces)
-                resource.OnDeviceLost();
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                Tracer.Info("Disposing Resources...");
-
-                foreach (IResourceContainer resource in _resouces)
-                    resource.Dispose();
-            }
-        }
-
-        private void DrawFrame()
+        private void RenderFrame()
         {
             try
             {
@@ -475,21 +299,16 @@ namespace Client.Core
                     return;
                 }
 
-                if (_doneFirstUpdate && (BeginDraw()))
-                {
-                    _drawState.TotalGameTime = _totalGameTime;
-                    _drawState.ElapsedGameTime = _lastFrameElapsedGameTime;
-                    _drawState.Device = _device;
-                    _drawState.Camera = _camera;
-                    _drawState.Renderer = _renderer;
-                    _drawState.Reset();
+                _drawState.TotalGameTime = _totalGameTime;
+                _drawState.ElapsedGameTime = _lastFrameElapsedGameTime;
+                _drawState.Device = _device;
+                _drawState.Camera = _camera;
+                _drawState.Renderer = _renderer;
+                _drawState.Reset();
 
-                    _drawState.BeginDraw();
-                    Draw(_drawState);
-                    _drawState.EndDraw();
-
-                    EndDraw();
-                }
+                OnBeforeRender();
+                Render(_drawState);
+                OnAfterRender();
             }
             catch (SharpDXException e)
             {
@@ -505,9 +324,177 @@ namespace Client.Core
             }
         }
 
+        public void Run()
+        {
+            try
+            {
+                Tracer.Info("Initializing Engine...");
+                Initialize();
+
+                _updateState.ElapsedGameTime = TimeSpan.Zero;
+                _updateState.TotalGameTime = TimeSpan.Zero;
+
+                Update(_updateState);
+
+                _doneFirstUpdate = true;
+
+                Tracer.Info("Running Game Loop...");
+                RenderLoop.Run(_form, Tick);
+            }
+            catch (SharpDXException ex)
+            {
+                string errorMessage = ErrorManager.GetErrorMessage(ex.ResultCode.Code);
+
+                Tracer.Error(errorMessage);
+                Tracer.Error(ex);
+                throw;
+            }
+            catch (Exception e)
+            {
+                Tracer.Error(e);
+                throw;
+            }
+        }
+
+        public void Tick()
+        {
+            if (_shouldStop)
+                return;
+
+            _clock.Step();
+
+            TimeSpan elapsedTime = _clock.ElapsedTime;
+
+            if (elapsedTime < TimeSpan.Zero)
+                elapsedTime = TimeSpan.Zero;
+
+            _totalGameTime += elapsedTime;
+
+            TimeSpan tickDelta = _totalGameTime - _lastFrameTotalGameTime;
+
+            // TODO: Need to add vsync support.
+
+            _updateState.ElapsedGameTime = elapsedTime;
+            _updateState.TotalGameTime = _totalGameTime;
+
+            Update(_updateState);
+
+            _lastFrameElapsedGameTime = elapsedTime;
+            _lastFrameTotalGameTime = _totalGameTime;
+
+            if (!_isFormResizing)
+                RenderFrame();
+        }
+
         internal void Stop()
         {
             _shouldStop = true;
+        }
+
+        private void Bind(object obj)
+        {
+            IResourceContainer resource = obj as IResourceContainer;
+
+            if (resource != null)
+                _resouces.Add(resource);
+
+            IRender renderable = obj as IRender;
+
+            if (renderable != null)
+                _renderables.Add(renderable);
+
+            IUpdate updatable = obj as IUpdate;
+
+            if (updatable != null)
+                _updatables.Add(updatable);
+        }
+
+        private void Release(object obj)
+        {
+            IResourceContainer resource = obj as IResourceContainer;
+
+            if (resource != null)
+                _resouces.Remove(resource);
+
+            IRender renderable = obj as IRender;
+
+            if (renderable != null)
+                _renderables.Remove(renderable);
+
+            IUpdate updatable = obj as IUpdate;
+
+            if (updatable != null)
+                _updatables.Remove(updatable);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Tracer.Info("Disposing Resources...");
+
+                foreach (IResourceContainer resource in _resouces)
+                    resource.Dispose();
+            }
+        }
+
+        private void OnDeviceReset()
+        {
+            foreach (IResourceContainer resource in _resouces)
+                resource.OnDeviceReset();
+        }
+
+        private void OnDeviceLost()
+        {
+            foreach (IResourceContainer resource in _resouces)
+                resource.OnDeviceLost();
+        }
+
+        private void OnFormClosed(object sender, FormClosedEventArgs e)
+        {
+            Stop();
+        }
+
+        private void OnResizeBegin(object sender, EventArgs e)
+        {
+            _isFormResizing = true;
+        }
+
+        private void OnResizeEnd(object sender, EventArgs e)
+        {
+            _isFormResizing = false;
+        }
+
+        private void OnFormResize(object sender, EventArgs e)
+        {
+            if (_form.WindowState == FormWindowState.Minimized)
+                return;
+
+            OnDeviceLost();
+
+            _presentParameters = new PresentParameters();
+            _presentParameters.BackBufferFormat = Format.X8R8G8B8;
+            _presentParameters.BackBufferCount = 1;
+            _presentParameters.BackBufferWidth = _form.ClientSize.Width;
+            _presentParameters.BackBufferHeight = _form.ClientSize.Height;
+            _presentParameters.MultiSampleType = MultisampleType.None;
+            _presentParameters.SwapEffect = SwapEffect.Discard;
+            _presentParameters.EnableAutoDepthStencil = true;
+            _presentParameters.AutoDepthStencilFormat = Format.D24S8;
+            _presentParameters.PresentFlags = PresentFlags.DiscardDepthStencil;
+            _presentParameters.PresentationInterval = PresentInterval.Immediate;
+            _presentParameters.Windowed = true;
+            _presentParameters.DeviceWindowHandle = _form.Handle;
+
+            _device.Reset(ref _presentParameters);
+
+            OnDeviceReset();
         }
     }
 }

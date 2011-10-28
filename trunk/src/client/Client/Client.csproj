@@ -45,7 +45,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
@@ -92,6 +92,7 @@
     <Compile Include="Configuration\ConfigSections.cs" />
     <Compile Include="Configuration\ConfigurationService.cs" />
     <Compile Include="Configuration\IConfigurationService.cs" />
+    <Compile Include="Core\Graphics\DeviceProvider.cs" />
     <Compile Include="Core\Graphics\IRender.cs" />
     <Compile Include="Core\Graphics\IResourceContainer.cs" />
     <Compile Include="Core\Graphics\VertexPositionColor.cs" />

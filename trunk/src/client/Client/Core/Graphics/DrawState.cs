@@ -205,22 +205,22 @@ namespace Client.Core.Graphics
             _renderer.Flush();
         }
 
-        internal void BeginDraw()
-        {
-            _frameAccumulator += (float)_elapsedGameTime.TotalSeconds;
-            _frameCount++;
+        //internal void BeginDraw()
+        //{
+        //    _frameAccumulator += (float)_elapsedGameTime.TotalSeconds;
+        //    _frameCount++;
 
-            if (_frameAccumulator >= 1.0f)
-            {
-                _framesPerSecond = _frameCount / _frameAccumulator;
-                _frameAccumulator = 0.0f;
-                _frameCount = 0;
-            }
-        }
+        //    if (_frameAccumulator >= 1.0f)
+        //    {
+        //        _framesPerSecond = _frameCount / _frameAccumulator;
+        //        _frameAccumulator = 0.0f;
+        //        _frameCount = 0;
+        //    }
+        //}
 
-        internal void EndDraw()
-        {
+    //    internal void EndDraw()
+    //    {
 
-        }
+    //    }
     }
 }

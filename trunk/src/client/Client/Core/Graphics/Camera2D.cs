@@ -105,13 +105,14 @@ namespace Client.Core.Graphics
             _boundingFrustumDirty = true;
 
             _engine = engine;
-            _engine.RenderForm.ResizeEnd += OnRenderFormResizeEnd;
+            _engine.RenderForm.Resize += OnRenderFormResize;
 
             _width = _engine.RenderForm.ClientSize.Width;
             _height = engine.RenderForm.ClientSize.Height;
+            _halfVector = new Vector2(1f / _width, 1f / _height);
         }
 
-        private void OnRenderFormResizeEnd(object sender, System.EventArgs e)
+        private void OnRenderFormResize(object sender, System.EventArgs e)
         {
             _width = _engine.RenderForm.ClientSize.Width;
             _height = _engine.RenderForm.ClientSize.Height;
