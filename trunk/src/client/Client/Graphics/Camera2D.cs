@@ -11,8 +11,9 @@
  ***************************************************************************/
 
 using SharpDX;
+using Client.Core;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
     public class Camera2D : ICamera
     {

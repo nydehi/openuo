@@ -14,7 +14,7 @@ using System;
 using System.IO;
 using SharpDX.Direct3D9;
 using SharpDX;
-using Client.Core.Graphics;
+using Client.Graphics;
 using Client.Core;
 
 namespace Client.Ultima
@@ -22,13 +22,15 @@ namespace Client.Ultima
     public class Textures
     {
         private readonly FileIndex _fileIndex;
+        private readonly Device _device;
 
         public Textures(Engine engine)
         {
+            _device = engine.Device;
             _fileIndex = new FileIndex(engine, "texidx.mul", "texmaps.mul", 0x4000, 10);
         }
 
-        public unsafe Texture CreateTexture(Engine engine, int index)
+        public unsafe Texture CreateTexture(int index)
         {
             if (!_fileIndex.FilesExist)
                 return null;
@@ -43,7 +45,7 @@ namespace Client.Ultima
             
             int size = extra == 0 ? 64 : 128;
 
-            Texture texture = new Texture(engine.Device, size, size, 0, Usage.None, Format.A1R5G5B5, Pool.Managed);
+            Texture texture = new Texture(_device, size, size, 0, Usage.None, Format.A1R5G5B5, Pool.Managed);
             DataRectangle rect = texture.LockRectangle(0, LockFlags.None);
             BinaryReader bin = new BinaryReader(stream);
 
@@ -62,6 +64,22 @@ namespace Client.Ultima
             texture.UnlockRectangle(0); 
 
             return texture;
+        }
+
+        public void Measure(int index, out Vector2 size)
+        {
+            int length, extra;
+            bool patched;
+
+            Stream stream = _fileIndex.Seek(index, out length, out extra, out patched);
+
+            if (stream == null)
+            {
+                size = Vector2.Zero;
+                return;
+            }
+
+            size.X = size.Y = extra == 0 ? 64 : 128;
         }
 
         //const int multiplier = 0xFF / 0x1F;

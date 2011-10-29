@@ -15,7 +15,7 @@ using System.IO;
 using Client.Configuration;
 using Ninject;
 using SharpDX.Direct3D9;
-using Client.Core.Graphics;
+using Client.Graphics;
 using Client.Core;
 
 namespace Client.Ultima

@@ -15,13 +15,14 @@ using System.Collections.Generic;
 using SharpDX;
 using SharpDX.Direct3D9;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
     public class DrawState
     {
         private readonly Stack<Matrix> _worldMatrixStack;
         private readonly Stack<Matrix> _viewMatrixStack;
         private readonly Stack<Matrix> _projectionMatrixStack;
+        private readonly Stack<IRenderer> _rendererStack;
 
         private TimeSpan _totalGameTime;
         private TimeSpan _elapsedGameTime;
@@ -35,7 +36,6 @@ namespace Client.Core.Graphics
         public IRenderer Renderer
         {
             get { return _renderer; }
-            set { _renderer = value; }
         }
 
         public Device Device
@@ -137,7 +137,7 @@ namespace Client.Core.Graphics
             get { return _device.Viewport; }
             set
             {
-                _renderer.Flush();
+                Flush();
                 _device.Viewport = value;
             }
         }
@@ -147,7 +147,7 @@ namespace Client.Core.Graphics
             get { return _device.ScissorRect; }
             set
             {
-                _renderer.Flush();
+                Flush();
                 _device.ScissorRect = value;
             }
         }
@@ -157,10 +157,12 @@ namespace Client.Core.Graphics
             _worldMatrixStack = new Stack<Matrix>();
             _viewMatrixStack = new Stack<Matrix>();
             _projectionMatrixStack = new Stack<Matrix>();
+            _rendererStack = new Stack<IRenderer>();
         }
 
         internal void Reset()
         {
+            _rendererStack.Clear();
             _worldMatrixStack.Clear();
             _viewMatrixStack.Clear();
             _projectionMatrixStack.Clear();
@@ -168,6 +170,13 @@ namespace Client.Core.Graphics
             _worldMatrixStack.Push(Matrix.Identity);
             _viewMatrixStack.Push(Matrix.Identity);
             _projectionMatrixStack.Push(Matrix.Identity);
+        }
+
+        public void PushRenderer(IRenderer renderer)
+        {
+            Flush();
+            _rendererStack.Push(renderer);
+            _renderer = renderer;
         }
 
         public void PushWorld(Matrix world)
@@ -183,6 +192,12 @@ namespace Client.Core.Graphics
         public void PushProjection(Matrix projection)
         {
             _projectionMatrixStack.Push(projection);
+        }
+
+        public void PopRenderer()
+        {
+            Flush();
+            _renderer = _rendererStack.Pop();
         }
 
         public void PopWorld()
@@ -202,6 +217,9 @@ namespace Client.Core.Graphics
 
         internal void Flush()
         {
+            if (_renderer == null)
+                return;
+
             _renderer.Flush();
         }
 

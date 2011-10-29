@@ -16,7 +16,7 @@ using System.Linq;
 using System.Text;
 using SharpDX;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
     public sealed class BoundingFrustum
     {

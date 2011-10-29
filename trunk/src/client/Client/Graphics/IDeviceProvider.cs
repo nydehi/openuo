@@ -2,7 +2,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -11,14 +11,18 @@
  ***************************************************************************/
 
 using System;
-using System.Net;
-using System.Windows;
-using Client.Core;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using SharpDX.Direct3D9;
+using SharpDX.Windows;
 
-namespace Client.Cores
+namespace Client.Graphics
 {
-    public interface IUpdate
+    public interface IDeviceProvider
     {
-        void Update(UpdateState state);
+        Device Device { get; }
+        RenderForm RenderForm { get; }
+        PresentParameters PresentParameters { get; }
     }
 }

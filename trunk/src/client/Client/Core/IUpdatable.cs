@@ -10,18 +10,15 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using SharpDX;
+using System;
+using System.Net;
+using System.Windows;
+using Client.Core;
 
-namespace Client.Core.Graphics
+namespace Client.Cores
 {
-    public interface ICamera
+    public interface IUpdatable
     {
-        int FarClip { get; set; }
-        int NearClip { get; set; }
-        Vector2 Position { get; set; }
-        Vector2 HalfVector { get; }
-        Matrix Projection { get; }
-        BoundingFrustum BoundingFrustum { get; }
-        //Matrix View { get; }
+        void Update(UpdateState state);
     }
 }

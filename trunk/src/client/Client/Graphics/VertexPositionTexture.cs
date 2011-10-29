@@ -2,7 +2,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -10,27 +10,27 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using System.Runtime.InteropServices;
-using SharpDX;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using SharpDX.Direct3D9;
+using SharpDX;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct VertexPositionColorTexture
+    public struct VertexPositionTexture
     {
         public static readonly VertexElement[] VertexElements = new[]
         {
-            new VertexElement(0, sizeof(float) * 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
-            new VertexElement(0, sizeof(float) * 3, DeclarationType.Float2, DeclarationMethod.Default, DeclarationUsage.TextureCoordinate, 0),
-            new VertexElement(0, sizeof(float) * 5, DeclarationType.Float4, DeclarationMethod.Default, DeclarationUsage.Color, 0),
-			VertexElement.VertexDeclarationEnd
+            new VertexElement(0, 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
+            new VertexElement(0, 12, DeclarationType.Float2, DeclarationMethod.Default, DeclarationUsage.TextureCoordinate, 0),
+            VertexElement.VertexDeclarationEnd
         };
 
-        public const int SizeInBytes = sizeof(float) * 9;
+        public const int SizeInBytes = sizeof(float) * 5;
 
         public Vector3 Position;
         public Vector2 TextureCoordinate;
-        public Color4 Color;
     }
 }

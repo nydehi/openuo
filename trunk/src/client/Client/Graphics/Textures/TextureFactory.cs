@@ -19,8 +19,9 @@ using SharpDX;
 using SharpDX.Direct3D;
 using Ninject;
 using Client.Cores;
+using Client.Core;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
     public enum TextureType
     {
@@ -33,8 +34,10 @@ namespace Client.Core.Graphics
         private readonly TimeSpan _cleanInterval = TimeSpan.FromMinutes(1);
         private readonly Cache<int, Texture> _landCache;
         private readonly Cache<int, Texture> _staticCache;
+        private readonly Cache<int, Texture> _gumpCache;
         private readonly Textures _textures;
         private readonly Art _art;
+        private readonly Gumps _gumps;
         private readonly Hues _hues;
         private readonly Engine _engine;
 
@@ -49,11 +52,13 @@ namespace Client.Core.Graphics
         public TextureFactory(Engine engine)
         {
             _engine = engine;
+            _gumpCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x1000);
             _landCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x1000);
-            _staticCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x10000);
+            _staticCache = new Cache<int, Texture>(TimeSpan.FromMinutes(5), 0x1000);
             _lastCacheClean = DateTime.MinValue;
             _textures = new Textures(engine);
             _hues = new Hues(engine);
+            _gumps = new Gumps(engine);
             _art = new Art(engine);
         }
 
@@ -62,14 +67,62 @@ namespace Client.Core.Graphics
             return _hues[index];
         }
 
-        public Texture CreateLand(Engine engine, int index)
+        public void GetGumpSize(int index, out Vector2 size)
+        {
+            Texture texture = _gumpCache[index];
+
+            if (texture == null)
+            {
+                _gumps.Measure(index, out size);
+                return;
+            }
+
+            SurfaceDescription description = texture.GetLevelDescription(0);
+
+            size.X = description.Width;
+            size.Y = description.Height;
+        }
+
+        public void GetLandSize(int index, out Vector2 size)
+        {
+            Texture texture = _landCache[index];
+
+            if (texture == null)
+            {
+                _textures.Measure(index, out size);
+                return;
+            }
+
+            SurfaceDescription description = texture.GetLevelDescription(0);
+
+            size.X = description.Width;
+            size.Y = description.Height;
+        }
+
+        public void GetStaticSize(int index, out Vector2 size)
+        {
+            Texture texture = _staticCache[index];
+
+            if (texture == null)
+            {
+                _art.Measure(index, out size);
+                return;
+            }
+
+            SurfaceDescription description = texture.GetLevelDescription(0);
+
+            size.X = description.Width;
+            size.Y = description.Height;
+        }
+
+        public Texture CreateLandTexture(int index)
         {
             Texture texture = _landCache[index];
 
             if (texture != null)
                 return texture;
 
-            texture = _textures.CreateTexture(engine, index);
+            texture = _textures.CreateTexture(index);
 
             if (texture == null)
                 return _missingTexture;
@@ -77,19 +130,34 @@ namespace Client.Core.Graphics
             return _landCache[index] = texture;
         }
 
-        public Texture CreateStatic(Engine engine, int index)
+        public Texture CreateStaticTexture(int index)
         {
             Texture texture = _staticCache[index];
 
             if (texture != null)
                 return texture;
 
-            texture = _art.CreateTexture(engine, index);
+            texture = _art.CreateTexture(index);
 
             if (texture == null)
                 return _missingTexture;
 
             return _staticCache[index] = texture;
+        }
+
+        public Texture CreateGumpTexture(int index)
+        {
+            Texture texture = _gumpCache[index];
+
+            if (texture != null)
+                return texture;
+
+            texture = _gumps.CreateTexture(index);
+
+            if (texture == null)
+                return _missingTexture;
+
+            return _gumpCache[index] = texture;
         }
 
         public void Update(UpdateState state)
@@ -111,6 +179,7 @@ namespace Client.Core.Graphics
         public void Dispose()
         {
             _landCache.Dispose();
+            _gumpCache.Dispose();
             _staticCache.Dispose();
             _missingTexture.Dispose();
         }

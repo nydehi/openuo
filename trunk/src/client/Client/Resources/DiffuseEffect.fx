@@ -7,8 +7,8 @@ sampler2D TextureSampler = sampler_state {
     Texture = (Texture);
     MinFilter = POINT;
     MagFilter = POINT;
-    AddressU = Clamp;
-    AddressV = Clamp;
+    AddressU = Wrap;
+    AddressV = Wrap;
 };
 
 struct VS_INPUT

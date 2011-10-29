@@ -15,20 +15,21 @@ using System.Collections;
 using SharpDX;
 using SharpDX.Direct3D9;
 using System;
+using Client.Core;
 
-namespace Client.Core.Graphics.Shaders
+namespace Client.Graphics.Shaders
 {
     public abstract class ShaderBase : IResourceContainer
     {
-        private readonly Engine _engine;
+        private readonly Device _device;
         private readonly Hashtable _effectHandles = new Hashtable();
         private readonly byte[] _effectData;
 
         private Effect _effect;  
 
-        protected ShaderBase(Engine engine, byte[] effectData)
+        protected ShaderBase(Device device, byte[] effectData)
         {
-            _engine = engine;
+            _device = device;
             _effectData = effectData;
         }
 
@@ -146,7 +147,7 @@ namespace Client.Core.Graphics.Shaders
 
         public void CreateResources()
         {
-            _effect = Effect.FromMemory(_engine.Device, _effectData, ShaderFlags.None);
+            _effect = Effect.FromMemory(_device, _effectData, ShaderFlags.None);
         }
 
         public void OnDeviceLost()

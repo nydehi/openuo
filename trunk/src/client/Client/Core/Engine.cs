@@ -14,8 +14,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using Client.Core.Graphics;
-using Client.Core.Graphics.Shaders;
+using Client.Graphics;
+using Client.Graphics.Shaders;
 using Client.Cores;
 using Client.Diagnostics;
 using Client.Ultima;
@@ -24,6 +24,7 @@ using SharpDX;
 using SharpDX.Diagnostics;
 using SharpDX.Direct3D9;
 using SharpDX.Windows;
+using Client.UI;
 
 namespace Client.Core
 {
@@ -46,13 +47,10 @@ namespace Client.Core
         private readonly IKernel _kernel;
         private readonly DeviceEx _device;
         private readonly RenderForm _form;
-
-        private IRenderer _renderer;
-        private ITextureFactory _textureFactory;
-
+        
         private readonly List<IResourceContainer> _resouces;
-        private readonly List<IUpdate> _updatables;
-        private readonly List<IRender> _renderables;
+        private readonly List<IUpdatable> _updatables;
+        private readonly List<IRenderable> _renderables;
 
         private PresentParameters _presentParameters;
 
@@ -69,7 +67,8 @@ namespace Client.Core
 
         private Camera2D _camera;
         private DiffuseShader _shader;
-        private Maps _maps;
+        private World _world;
+        private IRenderer _renderer;
 
         public RenderForm RenderForm
         {
@@ -95,14 +94,13 @@ namespace Client.Core
                 _targetFrameRate = value;
             }
         }
-
+        Maps _maps;
         public Engine(IKernel kernel)
         {
             _kernel = kernel;
-
             _resouces = new List<IResourceContainer>();
-            _updatables = new List<IUpdate>();
-            _renderables = new List<IRender>();
+            _updatables = new List<IUpdatable>();
+            _renderables = new List<IRenderable>();
 
             IDeviceProvider deviceProvider = kernel.Get<IDeviceProvider>();
 
@@ -111,6 +109,7 @@ namespace Client.Core
             _form.ResizeEnd += OnResizeEnd;
             _form.FormClosed += OnFormClosed;
             _form.Resize += new EventHandler(OnFormResize);
+            _form.KeyDown += new KeyEventHandler(_form_KeyDown);
             //_form.UserResized += OnFormUserResized;
             _device = new DeviceEx(deviceProvider.Device.NativePointer);
             _presentParameters = deviceProvider.PresentParameters;
@@ -119,6 +118,10 @@ namespace Client.Core
             _drawState = new DrawState();
             _updateState = new UpdateState();
             _clock = new GameClock();
+        }
+
+        void _form_KeyDown(object sender, KeyEventArgs e)
+        {
         }
 
         ~Engine()
@@ -133,14 +136,16 @@ namespace Client.Core
             _camera.FarClip = 1000;
             _camera.Position = new Vector2(1496, 1624);
 
-            _maps = new Maps(this);
-            _shader = new DiffuseShader(this);
             _renderer = _kernel.Get<IRenderer>();
-            _textureFactory = _kernel.Get<ITextureFactory>();
 
-            Bind(_shader);
+            IUserInterface userInterface = _kernel.Get<IUserInterface>();
+            ITextureFactory textureFactory = _kernel.Get<ITextureFactory>();
+            IUserInterfaceRenderer userInterfaceRenderer = _kernel.Get<IUserInterfaceRenderer>();
+
             Bind(_renderer);
-            Bind(_textureFactory);
+            Bind(textureFactory);
+            Bind(userInterface);
+            Bind(userInterfaceRenderer);
 
             Tracer.Info("Initializing Resources...");
 
@@ -150,7 +155,7 @@ namespace Client.Core
 
         private void Update(UpdateState state)
         {
-            foreach (IUpdate updatable in _updatables)
+            foreach (IUpdatable updatable in _updatables)
                 updatable.Update(state);
         }
 
@@ -161,125 +166,128 @@ namespace Client.Core
 
         private void Render(DrawState state)
         {
-            state.Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.CornflowerBlue, 1.0f, 0);
-            
-            state.Device.BeginScene();
-            state.Device.SetRenderState(RenderState.AlphaBlendEnable, true);
-            state.Device.SetRenderState(RenderState.AlphaTestEnable, true);
-            state.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-            state.Device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+            _device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.CornflowerBlue, 1.0f, 0);            
+            _device.BeginScene();
 
-            state.PushProjection(_camera.Projection);
-
-            _shader.Begin(state);
-
-            Vector2 cameraOffset = new Vector2(0.5f, 0.5f);
-            Vector2 cameraPosition = state.Camera.Position + cameraOffset;
-            Vector2 viewSize = new Vector2(_presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight);
-            Vector2 tileCounts = new Vector2(viewSize.X / 22, viewSize.Y / 22);
-
-            Tile centerTile = _maps.Felucca.Tiles.GetLandTile((int)cameraPosition.X, (int)cameraPosition.Y);
-            int centerTileZ = centerTile._z * 4;
-
-            tileCounts.X = Math.Min(tileCounts.X, MaxTileDistanceTime2);
-            tileCounts.Y = Math.Min(tileCounts.Y, MaxTileDistanceTime2);
-
-            int startX = (int)(cameraPosition.X - tileCounts.X);
-            int startY = (int)(cameraPosition.Y - tileCounts.Y);
-            int endX = (int)(cameraPosition.X + tileCounts.X);
-            int endY = (int)(cameraPosition.Y + tileCounts.Y);
-
-            Vector2 offset, northVector, eastVector, westVector, southVector, center;
-
-            float widthInPixels = tileCounts.X * TileStepX;
-            float heightInPixels = tileCounts.Y * TileStepY;
-
-            for (int y = startY; y < endY; y++)
-            {
-                offset.X = widthInPixels + (((-tileCounts.X) + (startY - y)) * TileStepY);
-                offset.Y = heightInPixels + ((tileCounts.Y) + (startY - y)) * TileStepY;
-
-                BoundingBox bb;
-
-                for (int x = startX; x < endX; x++)
-                {
-                    Tile tile = _maps.Felucca.Tiles.GetLandTile(x, y);
-                    Tile eastTile = _maps.Felucca.Tiles.GetLandTile(x + 1, y);
-                    Tile southTile = _maps.Felucca.Tiles.GetLandTile(x, y + 1);
-                    Tile southEastTile = _maps.Felucca.Tiles.GetLandTile(x + 1, y + 1);
-
-                    int tileZ = (tile._z * 4) + centerTileZ;
-                    int eastTileZ = (eastTile._z * 4) + centerTileZ;
-                    int southTileZ = (southTile._z * 4) + centerTileZ;
-                    int southEastTileZ = (southEastTile._z * 4) + centerTileZ;
-
-                    center.X = offset.X;
-                    center.Y = offset.Y;
-
-                    northVector.X = center.X;
-                    northVector.Y = center.Y + TileSizeOver2 + tileZ;
-
-                    eastVector.X = center.X - TileSizeOver2;
-                    eastVector.Y = center.Y + southTileZ;
-
-                    westVector.X = center.X + TileSizeOver2;
-                    westVector.Y = center.Y + eastTileZ;
-
-                    southVector.X = center.X;
-                    southVector.Y = (center.Y - TileSizeOver2) + southEastTileZ;
-
-                    bb.Minimum = new Vector3(eastVector.X, southVector.Y, float.MinValue);
-                    bb.Maximum = new Vector3(westVector.X, northVector.Y, float.MaxValue);
-
-                    if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
-                        state.Renderer.RenderQuad(ref northVector, ref eastVector, ref westVector, ref southVector, _textureFactory.CreateLand(this, tile._id));
-
-                    HuedTile[] statics = _maps.Felucca.Tiles.GetStaticTiles(x, y);
-
-                    for (int i = 0; i < statics.Length; i++)
-                    {
-                        HuedTile s = statics[i];
-                        Texture texture = _textureFactory.CreateStatic(this, s._id);
-
-                        SurfaceDescription description = texture.GetLevelDescription(0);
-
-                        int staticHeight = s._z * 4 + centerTileZ - 22;
-
-                        int height = description.Height;
-                        int width = description.Width;
-                        int widthOver2 = width / 2;
-
-                        northVector.X = center.X - widthOver2;
-                        northVector.Y = center.Y + height + staticHeight;
-
-                        eastVector.X = center.X - widthOver2;
-                        eastVector.Y = center.Y + staticHeight;
-
-                        westVector.X = center.X + widthOver2;
-                        westVector.Y = center.Y + height + staticHeight;
-
-                        southVector.X = center.X + widthOver2;
-                        southVector.Y = center.Y + staticHeight;
-
-                        bb.Minimum = new Vector3(eastVector.X, southVector.Y, 0);
-                        bb.Maximum = new Vector3(westVector.X, northVector.Y, 0);
-
-                        if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
-                            state.Renderer.RenderQuad(ref northVector, ref eastVector, ref westVector, ref southVector, texture);
-                    }
-
-                    offset.X += TileStepX;
-                    offset.Y -= TileStepY;
-                }
-            }
-
-            state.Flush();
-            state.PopProjection();
-
-            _shader.End();
+            foreach (IRenderable renderable in _renderables)
+                renderable.Render(state);
 
             _device.EndScene();
-            _device.Present();
+
+            //state.Device.SetRenderState(RenderState.AlphaBlendEnable, true);
+            //state.Device.SetRenderState(RenderState.AlphaTestEnable, true);
+            //state.Device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+            //state.Device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+
+            //state.PushProjection(_camera.Projection);
+
+            //_shader.Begin(state);
+
+            //Vector2 cameraOffset = new Vector2(0.5f, 0.5f);
+            //Vector2 cameraPosition = state.Camera.Position + cameraOffset;
+            //Vector2 viewSize = new Vector2(_presentParameters.BackBufferWidth, _presentParameters.BackBufferHeight);
+            //Vector2 tileCounts = new Vector2(viewSize.X / 22, viewSize.Y / 22);
+
+            //Tile centerTile = _maps.Felucca.Tiles.GetLandTile((int)cameraPosition.X, (int)cameraPosition.Y);
+            //int centerTileZ = centerTile._z * 4;
+
+            //tileCounts.X = 0.5f; //Math.Min(tileCounts.X, MaxTileDistanceTime2);
+            //tileCounts.Y = 0.5f;// Math.Min(tileCounts.Y, MaxTileDistanceTime2);
+
+            //int startX = (int)(cameraPosition.X - tileCounts.X);
+            //int startY = (int)(cameraPosition.Y - tileCounts.Y);
+            //int endX = (int)(cameraPosition.X + tileCounts.X);
+            //int endY = (int)(cameraPosition.Y + tileCounts.Y);
+
+            //Vector2 offset, northVector, eastVector, westVector, southVector, center;
+
+            //float widthInPixels = tileCounts.X * TileStepX;
+            //float heightInPixels = tileCounts.Y * TileStepY;
+
+            //for (int y = startY; y < endY; y++)
+            //{
+            //    offset.X = widthInPixels + (((-tileCounts.X) + (startY - y)) * TileStepY);
+            //    offset.Y = heightInPixels + ((tileCounts.Y) + (startY - y)) * TileStepY;
+
+            //    BoundingBox bb;
+
+            //    for (int x = startX; x < endX; x++)
+            //    {
+            //        Tile tile = _maps.Felucca.Tiles.GetLandTile(x, y);
+            //        Tile eastTile = _maps.Felucca.Tiles.GetLandTile(x + 1, y);
+            //        Tile southTile = _maps.Felucca.Tiles.GetLandTile(x, y + 1);
+            //        Tile southEastTile = _maps.Felucca.Tiles.GetLandTile(x + 1, y + 1);
+
+            //        int tileZ = (tile._z * 4) - centerTileZ;
+            //        int eastTileZ = (eastTile._z * 4) - centerTileZ;
+            //        int southTileZ = (southTile._z * 4) - centerTileZ;
+            //        int southEastTileZ = (southEastTile._z * 4) - centerTileZ;
+
+            //        center.X = offset.X;
+            //        center.Y = offset.Y;
+
+            //        northVector.X = center.X;
+            //        northVector.Y = center.Y + TileSizeOver2 + tileZ;
+
+            //        eastVector.X = center.X - TileSizeOver2;
+            //        eastVector.Y = center.Y + southTileZ;
+
+            //        westVector.X = center.X + TileSizeOver2;
+            //        westVector.Y = center.Y + eastTileZ;
+
+            //        southVector.X = center.X;
+            //        southVector.Y = (center.Y - TileSizeOver2) + southEastTileZ;
+
+            //        bb.Minimum = new Vector3(eastVector.X, southVector.Y, float.MinValue);
+            //        bb.Maximum = new Vector3(westVector.X, northVector.Y, float.MaxValue);
+
+            //        if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
+            //            state.Renderer.RenderQuad(ref northVector, ref eastVector, ref westVector, ref southVector, _textureFactory.CreateLandTexture(tile._id));
+
+            //        HuedTile[] statics = _maps.Felucca.Tiles.GetStaticTiles(x, y);
+
+            //        for (int i = 0; i < statics.Length; i++)
+            //        {
+            //            HuedTile s = statics[i];
+            //            Texture texture = _textureFactory.CreateStaticTexture(s._id);
+
+            //            SurfaceDescription description = texture.GetLevelDescription(0);
+
+            //            int staticHeight = s._z * 4 + centerTileZ - 22;
+
+            //            int height = description.Height;
+            //            int width = description.Width;
+            //            int widthOver2 = width / 2;
+
+            //            northVector.X = center.X - widthOver2;
+            //            northVector.Y = center.Y + height + staticHeight;
+
+            //            eastVector.X = center.X - widthOver2;
+            //            eastVector.Y = center.Y + staticHeight;
+
+            //            westVector.X = center.X + widthOver2;
+            //            westVector.Y = center.Y + height + staticHeight;
+
+            //            southVector.X = center.X + widthOver2;
+            //            southVector.Y = center.Y + staticHeight;
+
+            //            bb.Minimum = new Vector3(eastVector.X, southVector.Y, 0);
+            //            bb.Maximum = new Vector3(westVector.X, northVector.Y, 0);
+
+            //            if (_camera.BoundingFrustum.Contains(bb) != ContainmentType.Disjoint)
+            //                state.Renderer.RenderQuad(ref northVector, ref eastVector, ref westVector, ref southVector, texture);
+            //        }
+
+            //        offset.X += TileStepX;
+            //        offset.Y -= TileStepY;
+            //    }
+            //}
+
+            //state.Flush();
+            //state.PopProjection();
+
+            //_shader.End();
+            //_device.EndScene();
         }
 
         private void OnAfterRender()
@@ -303,12 +311,14 @@ namespace Client.Core
                 _drawState.ElapsedGameTime = _lastFrameElapsedGameTime;
                 _drawState.Device = _device;
                 _drawState.Camera = _camera;
-                _drawState.Renderer = _renderer;
+                _drawState.PushRenderer(_renderer);
                 _drawState.Reset();
 
                 OnBeforeRender();
                 Render(_drawState);
                 OnAfterRender();
+
+                _device.Present();
             }
             catch (SharpDXException e)
             {
@@ -398,12 +408,12 @@ namespace Client.Core
             if (resource != null)
                 _resouces.Add(resource);
 
-            IRender renderable = obj as IRender;
+            IRenderable renderable = obj as IRenderable;
 
             if (renderable != null)
                 _renderables.Add(renderable);
 
-            IUpdate updatable = obj as IUpdate;
+            IUpdatable updatable = obj as IUpdatable;
 
             if (updatable != null)
                 _updatables.Add(updatable);
@@ -416,12 +426,12 @@ namespace Client.Core
             if (resource != null)
                 _resouces.Remove(resource);
 
-            IRender renderable = obj as IRender;
+            IRenderable renderable = obj as IRenderable;
 
             if (renderable != null)
                 _renderables.Remove(renderable);
 
-            IUpdate updatable = obj as IUpdate;
+            IUpdatable updatable = obj as IUpdatable;
 
             if (updatable != null)
                 _updatables.Remove(updatable);
