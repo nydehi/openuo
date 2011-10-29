@@ -12,8 +12,10 @@
 
 using Client.Properties;
 using SharpDX;
+using Client.Core;
+using SharpDX.Direct3D9;
 
-namespace Client.Core.Graphics.Shaders
+namespace Client.Graphics.Shaders
 {
     public class DiffuseShader : ShaderBase
     {
@@ -29,8 +31,8 @@ namespace Client.Core.Graphics.Shaders
             set;
         }
 
-        public DiffuseShader(Engine engine)
-            : base(engine, Resources.DiffuseEffect)
+        public DiffuseShader(Device device)
+            : base(device, Resources.DiffuseEffect)
         {
 
         }

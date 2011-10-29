@@ -14,15 +14,9 @@ using System;
 using SharpDX;
 using SharpDX.Direct3D9;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
-    public interface IRenderer : IResourceContainer
+    public interface IUserInterfaceRenderer : IRenderer
     {
-        Vector2 MeasureString(Font font, string text);
-        void RenderString(Font font, string text, int x, int y, Color4 color);
-        void RenderLine(int x0, int y0, Color4 color0, int x1, int y1, Color4 color1);
-        void Flush();
-
-        void RenderQuad(ref Vector2 northVector, ref Vector2 eastVector, ref Vector2 westVector, ref Vector2 southVector, Texture texture);
     }
 }

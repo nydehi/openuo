@@ -13,7 +13,8 @@
 using Client.Configuration;
 using Client.Diagnostics;
 using Client.Modules;
-using Client.Core.Graphics;
+using Client.Graphics;
+using Client.UI;
 
 namespace Client.Core
 {
@@ -27,7 +28,9 @@ namespace Client.Core
             Kernel.Bind<IConfigurationService>().To<ConfigurationService>().InSingletonScope();
             Kernel.Bind<IDeviceProvider>().To<DeviceProvider>().InSingletonScope();
             Kernel.Bind<IRenderer>().To<Renderer>().InSingletonScope();
+            Kernel.Bind<IUserInterfaceRenderer>().To<UserInterfaceRenderer>().InSingletonScope();
             Kernel.Bind<ITextureFactory>().To<TextureFactory>().InSingletonScope();
+            Kernel.Bind<IUserInterface>().To<UserInterface>().InSingletonScope();
         }
     }
 }

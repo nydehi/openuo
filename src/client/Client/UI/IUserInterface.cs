@@ -14,11 +14,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Client.Cores;
+using Client.Graphics;
 
-namespace Client.Core.Graphics
+namespace Client.UI
 {
-    public interface IRender : IResourceContainer
+    public interface IUserInterface : IUpdatable, IRenderableResource
     {
-        void Render(DrawState state);
+        ITextureFactory TextureFactory { get; }
+
+        void Add(Element element);
+        void Remove(Element element);
+
+        void Clear();
     }
 }

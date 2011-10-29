@@ -14,15 +14,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SharpDX.Direct3D9;
-using SharpDX.Windows;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
-    public interface IDeviceProvider
+    public interface IRenderableResource : IRenderable, IResourceContainer
     {
-        Device Device { get; }
-        RenderForm RenderForm { get; }
-        PresentParameters PresentParameters { get; }
+
     }
 }

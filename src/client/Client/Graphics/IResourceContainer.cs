@@ -2,7 +2,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -10,14 +10,17 @@
  *   (at your option) any later version.
  ***************************************************************************/
 
-using SharpDX.Direct3D9;
-using Client.Cores;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
-    public interface ITextureFactory : IUpdate, IResourceContainer
+    public interface IResourceContainer : IDisposable
     {
-        Texture CreateLand(Engine engine, int index);
-        Texture CreateStatic(Engine engine, int index);
+        void CreateResources();
+        void OnDeviceLost();
+        void OnDeviceReset();
     }
 }

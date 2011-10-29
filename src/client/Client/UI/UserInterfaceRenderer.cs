@@ -16,10 +16,9 @@ using Ninject;
 using SharpDX;
 using SharpDX.Direct3D9;
 
-namespace Client.Core.Graphics
+namespace Client.Graphics
 {
-
-    public sealed class Renderer : IRenderer
+    public sealed class UserInterfaceRenderer : IUserInterfaceRenderer
     {
         private class TextureBatch
         {
@@ -57,7 +56,7 @@ namespace Client.Core.Graphics
         }
 
         [Inject]
-        public Renderer(IDeviceProvider provider)
+        public UserInterfaceRenderer(IDeviceProvider provider)
         {
             _device = provider.Device;
             _textures = new List<TextureBatch>();
@@ -116,17 +115,19 @@ namespace Client.Core.Graphics
             if (_currentVertex + 4 >= _vertices.Length)
                 Flush();
 
-            _vertices[_currentVertex + 0].Position.X = tl.X;
-            _vertices[_currentVertex + 0].Position.Y = tl.Y;
+            int index = _currentVertex;
 
-            _vertices[_currentVertex + 1].Position.X = bl.X;
-            _vertices[_currentVertex + 1].Position.Y = bl.Y;
+            _vertices[index].Position.X = tl.X;
+            _vertices[index++].Position.Y = tl.Y;
 
-            _vertices[_currentVertex + 2].Position.X = tr.X;
-            _vertices[_currentVertex + 2].Position.Y = tr.Y;
+            _vertices[index].Position.X = tr.X;
+            _vertices[index++].Position.Y = tr.Y;
 
-            _vertices[_currentVertex + 3].Position.X = br.X;
-            _vertices[_currentVertex + 3].Position.Y = br.Y;
+            _vertices[index].Position.X = bl.X;
+            _vertices[index++].Position.Y = bl.Y;
+
+            _vertices[index].Position.X = br.X;
+            _vertices[index++].Position.Y = br.Y;
 
             int previousIndex = _textures.Count - 1;
             TextureBatch batch;
@@ -146,7 +147,87 @@ namespace Client.Core.Graphics
                 _textures.Add(batch);
             }
 
-            _currentVertex += 4;
+            _currentVertex = index;
+        }
+
+        public void RenderQuad(ref Vector2 position, ref Vector2 size, Texture texture)
+        {
+            if (_currentVertex + 4 >= _vertices.Length)
+                Flush();
+
+            int index = _currentVertex;
+
+            _vertices[index].Position.X = position.X;
+            _vertices[index++].Position.Y = position.Y;
+
+            _vertices[index].Position.X = position.X + size.X;
+            _vertices[index++].Position.Y = position.Y;
+
+            _vertices[index].Position.X = position.X;
+            _vertices[index++].Position.Y = position.Y + size.Y;
+
+            _vertices[index].Position.X = position.X + size.X;
+            _vertices[index++].Position.Y = position.Y + size.Y;
+
+            int previousIndex = _textures.Count - 1;
+            TextureBatch batch;
+
+            if (_textures.Count > 0 && (batch = _textures[previousIndex]).Texture == texture && batch.VertexCount < _maxBatches)
+            {
+                batch.VertexCount += 4;
+            }
+            else
+            {
+                batch = new TextureBatch()
+                {
+                    BaseVertex = _currentVertex,
+                    Texture = texture
+                };
+
+                _textures.Add(batch);
+            }
+
+            _currentVertex = index;
+        }
+
+        public void RenderUIQuad(ref Vector2 position, ref Vector2 size, Texture texture)
+        {
+            if (_currentVertex + 4 >= _vertices.Length)
+                Flush();
+
+            int index = _currentVertex;
+
+            _vertices[index].Position.X = position.X;
+            _vertices[index++].Position.Y = position.Y;
+
+            _vertices[index].Position.X = position.X;
+            _vertices[index++].Position.Y = position.Y + size.Y;
+
+            _vertices[index].Position.X = position.X + size.X;
+            _vertices[index++].Position.Y = position.Y;
+
+            _vertices[index].Position.X = position.X + size.X;
+            _vertices[index++].Position.Y = position.Y + size.Y;
+
+            int previousIndex = _textures.Count - 1;
+            TextureBatch batch;
+
+            if (_textures.Count > 0 && (batch = _textures[previousIndex]).Texture == texture && batch.VertexCount < _maxBatches)
+            {
+                batch.VertexCount += 4;
+            }
+            else
+            {
+                batch = new TextureBatch()
+                {
+                    BaseVertex = _currentVertex,
+                    Texture = texture
+                };
+
+                _textures.Add(batch);
+            }
+
+            _currentVertex = index;
         }
 
         public Vector2 MeasureString(Font font, string text)

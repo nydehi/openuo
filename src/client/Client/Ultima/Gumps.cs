@@ -19,21 +19,21 @@ using Client.Core;
 
 namespace Client.Ultima
 {
-    public class Art
+    public class Gumps
     {
         private readonly FileIndex _fileIndex;
         private readonly Device _device;
 
-        public Art(Engine engine)
+        public Gumps(Engine engine)
         {
             _device = engine.Device;
-            _fileIndex = new FileIndex(engine, "artidx.mul", "art.mul", 0x10000, 4);
+            _fileIndex = new FileIndex(engine, "Gumpidx.mul", "Gumpart.mul", 0x10000, 12);
         }
 
         public unsafe Texture CreateTexture(int index)
         {
-            index &= 0x3FFF;
-            index += 0x4000;
+            if (!_fileIndex.FilesExist)
+                return null;
 
             int length, extra;
             bool patched;
@@ -43,24 +43,21 @@ namespace Client.Ultima
             if (stream == null)
                 return null;
 
-            BinaryReader bin = new BinaryReader(stream);
+            int width = (extra >> 16) & 0xFFFF;
+            int height = extra & 0xFFFF;
 
-            bin.ReadInt32(); // Unknown
-            int width = bin.ReadInt16();
-            int height = bin.ReadInt16();
-
-            if (width <= 0 || height <= 0)
+            if (width == 0 || height == 0)
                 return null;
-
-            int[] lookups = new int[height];
-
-            int start = (int)bin.BaseStream.Position + (height * 2);
-
-            for (int i = 0; i < height; ++i)
-                lookups[i] = (int)(start + (bin.ReadUInt16() * 2));
 
             Texture texture = new Texture(_device, width, height, 0, Usage.None, Format.A1R5G5B5, Pool.Managed);
             DataRectangle rect = texture.LockRectangle(0, LockFlags.None);
+            BinaryReader bin = new BinaryReader(stream);
+
+            int[] lookups = new int[height];
+            int start = (int)bin.BaseStream.Position;
+
+            for (int i = 0; i < height; ++i)
+                lookups[i] = start + (bin.ReadInt32() * 4);
 
             ushort* line = (ushort*)rect.DataPointer;
             int delta = rect.Pitch >> 1;
@@ -70,21 +67,28 @@ namespace Client.Ultima
                 bin.BaseStream.Seek(lookups[y], SeekOrigin.Begin);
 
                 ushort* cur = line;
-                ushort* end;
+                ushort* end = line + width;
 
-                int xOffset, xRun;
-
-                while (((xOffset = bin.ReadUInt16()) + (xRun = bin.ReadUInt16())) != 0)
+                while (cur < end)
                 {
-                    cur += xOffset;
-                    end = cur + xRun;
+                    ushort color = bin.ReadUInt16();
+                    ushort* next = cur + bin.ReadUInt16();
 
-                    while (cur < end)
-                        *cur++ = (ushort)(bin.ReadUInt16() ^ 0x8000);
+                    if (color == 0)
+                    {
+                        cur = next;
+                    }
+                    else
+                    {
+                        color ^= 0x8000;
+
+                        while (cur < next)
+                            *cur++ = color;
+                    }
                 }
             }
 
-            texture.UnlockRectangle(0);
+            texture.UnlockRectangle(0); 
 
             return texture;
         }
@@ -102,12 +106,8 @@ namespace Client.Ultima
                 return;
             }
 
-            BinaryReader bin = new BinaryReader(stream);
-
-            bin.ReadInt32(); // Unknown
-            size.X = bin.ReadInt16();
-            size.Y = bin.ReadInt16();
-
+            size.X = (extra >> 16) & 0xFFFF;
+            size.Y = extra & 0xFFFF;
         }
     }
 }

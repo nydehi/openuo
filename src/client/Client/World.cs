@@ -12,15 +12,25 @@
 
 using System.Collections.Generic;
 using Client.Core;
+using Client.Ultima;
 
 namespace Client
 {
     public sealed class World
     {
         private Engine _engine;
+        private Maps _maps;
+
+        private int _currentMap;
+        private Mobile _player;
 
         private Dictionary<Serial, Mobile> _mobiles;
         private Dictionary<Serial, Item> _items;
+        
+        public Mobile Player
+        {
+            get { return _player; }
+        }
 
         public Dictionary<Serial, Mobile> Mobiles
         {
