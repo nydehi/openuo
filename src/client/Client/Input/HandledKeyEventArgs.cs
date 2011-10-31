@@ -3,7 +3,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -12,19 +12,12 @@
  ***************************************************************************/
  #endregion
 
-using System;
+using System.Windows.Forms;
 
-namespace Client.Diagnostics
+namespace Client.Input
 {
-    public sealed class TraceMessageEventArgs : EventArgs
+    public class HandledKeyEventArgs : KeyEventArgs
     {
-        public TraceMessage TraceMessage { get; private set; }
-
-        public TraceMessageEventArgs(TraceMessage traceMessage)
-        {
-            Asserter.AssertIsNotNull(traceMessage, "traceMessage");
-
-            TraceMessage = traceMessage;
-        }
+        public HandledKeyEventArgs(Keys keyData) : base(keyData) { }
     }
 }

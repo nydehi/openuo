@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,17 +10,15 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 using System;
 using Client.Collections;
+using Client.Core;
 using Client.Properties;
 using Client.Ultima;
-using SharpDX.Direct3D9;
 using SharpDX;
-using SharpDX.Direct3D;
-using Ninject;
-using Client.Cores;
-using Client.Core;
+using SharpDX.Direct3D9;
 
 namespace Client.Graphics
 {

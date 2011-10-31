@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,6 +10,7 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 using System;
 using System.Collections.Generic;
@@ -191,44 +193,9 @@ namespace Client.Graphics
             _currentVertex = index;
         }
 
-        public void RenderUIQuad(ref Vector2 position, ref Vector2 size, Texture texture)
+        public void RenderQuad(ref Vector2 position, ref Vector2 size, ref Vector2 texCoords, Texture texture)
         {
-            if (_currentVertex + 4 >= _vertices.Length)
-                Flush();
-
-            int index = _currentVertex;
-
-            _vertices[index].Position.X = position.X;
-            _vertices[index++].Position.Y = position.Y;
-
-            _vertices[index].Position.X = position.X;
-            _vertices[index++].Position.Y = position.Y + size.Y;
-
-            _vertices[index].Position.X = position.X + size.X;
-            _vertices[index++].Position.Y = position.Y;
-
-            _vertices[index].Position.X = position.X + size.X;
-            _vertices[index++].Position.Y = position.Y + size.Y;
-
-            int previousIndex = _textures.Count - 1;
-            TextureBatch batch;
-
-            if (_textures.Count > 0 && (batch = _textures[previousIndex]).Texture == texture && batch.VertexCount < _maxBatches)
-            {
-                batch.VertexCount += 4;
-            }
-            else
-            {
-                batch = new TextureBatch()
-                {
-                    BaseVertex = _currentVertex,
-                    Texture = texture
-                };
-
-                _textures.Add(batch);
-            }
-
-            _currentVertex = index;
+            throw new NotImplementedException();
         }
 
         public Vector2 MeasureString(Font font, string text)

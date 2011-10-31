@@ -92,6 +92,7 @@
     <Compile Include="Configuration\ConfigSections.cs" />
     <Compile Include="Configuration\ConfigurationService.cs" />
     <Compile Include="Configuration\IConfigurationService.cs" />
+    <Compile Include="Graphics\GBuffer.cs" />
     <Compile Include="Graphics\VertexPositionTexture.cs" />
     <Compile Include="Graphics\DeviceProvider.cs" />
     <Compile Include="Graphics\IRenderable.cs" />
@@ -102,7 +103,7 @@
     <Compile Include="Core\EngineModule.cs" />
     <Compile Include="Graphics\IDeviceProvider.cs" />
     <Compile Include="Graphics\IRenderer.cs" />
-    <Compile Include="Graphics\Renderer.cs" />
+    <Compile Include="Graphics\DefaultRenderer.cs" />
     <Compile Include="Diagnostics\ITraceListener.cs" />
     <Compile Include="Diagnostics\Listeners\DebugLogTraceListener.cs" />
     <Compile Include="Diagnostics\Listeners\DebugTraceListener.cs" />
@@ -128,6 +129,10 @@
     <Compile Include="Graphics\VertexPositionColorTexture.cs" />
     <Compile Include="Graphics\VertexPositionNormalTexture.cs" />
     <Compile Include="ImageExtensions.cs" />
+    <Compile Include="Input\HandledKeyEventArgs.cs" />
+    <Compile Include="Input\InputBinding.cs" />
+    <Compile Include="Input\InputService.cs" />
+    <Compile Include="Input\IInputService.cs" />
     <Compile Include="IO\FileSystemHelper.cs" />
     <Compile Include="IO\Paths.cs" />
     <Compile Include="Item.cs" />
@@ -150,12 +155,13 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serial.cs" />
+    <Compile Include="UI\BackgroundElement.cs" />
     <Compile Include="UI\Element.cs" />
     <Compile Include="UI\IUserInterfaceRenderer.cs" />
-    <Compile Include="UI\IUserInterface.cs" />
+    <Compile Include="UI\IUserInterfaceManager.cs" />
     <Compile Include="UI\UserInterfaceRenderer.cs" />
     <Compile Include="UI\TextureElement.cs" />
-    <Compile Include="UI\UserInterface.cs" />
+    <Compile Include="UI\UserInterfaceManager.cs" />
     <Compile Include="Ultima\Art.cs" />
     <Compile Include="Ultima\Gumps.cs" />
     <Compile Include="Ultima\FileIndex.cs" />
@@ -197,14 +203,9 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="Resources\DiffuseEffect.fx" />
-    <None Include="MissingTexture.dds">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="Resources\MissingTexture.dds" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Input\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

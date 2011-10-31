@@ -1,3 +1,4 @@
+#region License Header
 /***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
@@ -9,11 +10,12 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 using System.IO;
 using Client.Configuration;
-using Ninject;
 using Client.Core;
+using Ninject;
 
 namespace Client.Ultima
 {

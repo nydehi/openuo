@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,15 +10,11 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Client.Core;
-using SharpDX.Direct3D9;
-using Client.Graphics;
 using SharpDX;
+using SharpDX.Direct3D9;
 
 namespace Client.UI
 {
@@ -25,10 +22,15 @@ namespace Client.UI
     {
         private int _index;
         private Texture _texture;
+        private Vector2 _size;
 
-        public Vector2 Size;
+        public virtual Vector2 Size
+        {
+            get { return _size; }
+            set { _size = value; }
+        }
 
-        public TextureElement(IUserInterface userInterface, int index)
+        public TextureElement(IUserInterfaceManager userInterface, int index)
             : base(userInterface)
         {
             _index = index;
@@ -45,7 +47,10 @@ namespace Client.UI
             if (_texture == null)
                 return;
 
-            state.Renderer.RenderQuad(ref Position, ref Size, _texture);
+            Vector2 position = Position;
+            Vector2 size = Size;
+
+            state.Renderer.RenderQuad(ref position, ref size, _texture);
         }
     }
 }

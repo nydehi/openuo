@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,21 +10,20 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Ninject;
-using Client.Graphics;
 using Client.Core;
+using Client.Graphics;
 using Client.Graphics.Shaders;
-using SharpDX.Direct3D9;
+using Ninject;
 using SharpDX;
+using SharpDX.Direct3D9;
 
 namespace Client.UI
 {
-    public sealed class UserInterface : IUserInterface
+    public sealed class UserInterfaceManager : IUserInterfaceManager
     {
         private List<Element> _elements;
         private DiffuseShader _shader;
@@ -40,7 +40,7 @@ namespace Client.UI
         }
 
         [Inject]
-        public UserInterface(IKernel kernel)
+        public UserInterfaceManager(IKernel kernel)
         {
             IDeviceProvider provider = kernel.Get<IDeviceProvider>();
 
