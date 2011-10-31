@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,26 +10,28 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Client.Graphics;
-using SharpDX.Direct3D9;
-using SharpDX;
 using Client.Core;
 using Client.Cores;
+using Client.Graphics;
+using SharpDX;
 
 namespace Client.UI
 {
     public abstract class Element : IRenderable,IUpdatable
     {         
-        protected IUserInterface UserInterface;
+        private Vector2 _position;
 
-        public Vector2 Position;
+        public virtual Vector2 Position
+        {
+            get { return _position; }
+            set { _position = value; }
+        }
 
-        public Element(IUserInterface userInterface)
+        protected IUserInterfaceManager UserInterface;
+
+        public Element(IUserInterfaceManager userInterface)
         {
             UserInterface = userInterface;
         }

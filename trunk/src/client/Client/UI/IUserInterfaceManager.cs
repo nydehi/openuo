@@ -3,7 +3,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -12,19 +12,18 @@
  ***************************************************************************/
  #endregion
 
-using System;
+using Client.Cores;
+using Client.Graphics;
 
-namespace Client.Diagnostics
+namespace Client.UI
 {
-    public sealed class TraceMessageEventArgs : EventArgs
+    public interface IUserInterfaceManager : IUpdatable, IRenderableResource
     {
-        public TraceMessage TraceMessage { get; private set; }
+        ITextureFactory TextureFactory { get; }
 
-        public TraceMessageEventArgs(TraceMessage traceMessage)
-        {
-            Asserter.AssertIsNotNull(traceMessage, "traceMessage");
+        void Add(Element element);
+        void Remove(Element element);
 
-            TraceMessage = traceMessage;
-        }
+        void Clear();
     }
 }

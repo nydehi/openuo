@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,6 +10,7 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 using System;
 using System.Collections.Generic;
@@ -190,7 +192,7 @@ namespace Client.Graphics
             _currentVertex = index;
         }
 
-        public void RenderUIQuad(ref Vector2 position, ref Vector2 size, Texture texture)
+        public void RenderQuad(ref Vector2 position, ref Vector2 size, ref Vector2 texCoords, Texture texture)
         {
             if (_currentVertex + 4 >= _vertices.Length)
                 Flush();
@@ -198,16 +200,20 @@ namespace Client.Graphics
             int index = _currentVertex;
 
             _vertices[index].Position.X = position.X;
-            _vertices[index++].Position.Y = position.Y;
+            _vertices[index].Position.Y = position.Y;
 
-            _vertices[index].Position.X = position.X;
-            _vertices[index++].Position.Y = position.Y + size.Y;
+            _vertices[++index].Position.X = position.X + size.X;
+            _vertices[index].Position.Y = position.Y;
+            _vertices[index].TextureCoordinate.X = texCoords.X;
+             
+            _vertices[++index].Position.X = position.X;
+            _vertices[index].Position.Y = position.Y + size.Y;
+            _vertices[index].TextureCoordinate.Y = texCoords.Y;
 
-            _vertices[index].Position.X = position.X + size.X;
-            _vertices[index++].Position.Y = position.Y;
-
-            _vertices[index].Position.X = position.X + size.X;
-            _vertices[index++].Position.Y = position.Y + size.Y;
+            _vertices[++index].Position.X = position.X + size.X;
+            _vertices[index].Position.Y = position.Y + size.Y;
+            _vertices[index].TextureCoordinate.X = texCoords.X;
+            _vertices[index].TextureCoordinate.Y = texCoords.Y;
 
             int previousIndex = _textures.Count - 1;
             TextureBatch batch;
@@ -227,8 +233,9 @@ namespace Client.Graphics
                 _textures.Add(batch);
             }
 
-            _currentVertex = index;
+            _currentVertex = ++index;
         }
+
 
         public Vector2 MeasureString(Font font, string text)
         {

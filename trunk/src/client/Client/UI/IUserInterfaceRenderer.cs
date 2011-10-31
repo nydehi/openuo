@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,10 +10,7 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
-
-using System;
-using SharpDX;
-using SharpDX.Direct3D9;
+ #endregion
 
 namespace Client.Graphics
 {

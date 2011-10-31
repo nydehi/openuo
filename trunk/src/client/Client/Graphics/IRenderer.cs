@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,8 +10,8 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
-using System;
 using SharpDX;
 using SharpDX.Direct3D9;
 
@@ -24,6 +25,7 @@ namespace Client.Graphics
         void Flush();
 
         void RenderQuad(ref Vector2 position, ref Vector2 size, Texture texture);
+        void RenderQuad(ref Vector2 position, ref Vector2 size, ref Vector2 texCoords, Texture texture);
         void RenderQuad(ref Vector2 topLeft, ref Vector2 topRight, ref Vector2 bottomLeft, ref Vector2 bottomRight, Texture texture);
     }
 }

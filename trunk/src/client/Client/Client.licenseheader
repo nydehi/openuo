@@ -1,5 +1,6 @@
 ﻿extensions: designer.cs
 extensions: .cs
+#region License Header
 /***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
@@ -11,6 +12,7 @@ extensions: .cs
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 extensions: .aspx .ascx
 <%-- 

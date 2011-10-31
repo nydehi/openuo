@@ -1,4 +1,5 @@
-﻿/***************************************************************************
+﻿#region License Header
+/***************************************************************************
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
@@ -9,22 +10,24 @@
  *   the Free Software Foundation; either version 3 of the License, or
  *   (at your option) any later version.
  ***************************************************************************/
+ #endregion
 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using Client.Graphics;
-using Client.Graphics.Shaders;
 using Client.Cores;
 using Client.Diagnostics;
+using Client.Graphics;
+using Client.Graphics.Shaders;
+using Client.Input;
+using Client.UI;
 using Client.Ultima;
 using Ninject;
 using SharpDX;
 using SharpDX.Diagnostics;
 using SharpDX.Direct3D9;
 using SharpDX.Windows;
-using Client.UI;
 
 namespace Client.Core
 {
@@ -110,7 +113,7 @@ namespace Client.Core
             _form.FormClosed += OnFormClosed;
             _form.Resize += new EventHandler(OnFormResize);
             _form.KeyDown += new KeyEventHandler(_form_KeyDown);
-            //_form.UserResized += OnFormUserResized;
+
             _device = new DeviceEx(deviceProvider.Device.NativePointer);
             _presentParameters = deviceProvider.PresentParameters;
             _totalGameTime = TimeSpan.Zero;
@@ -138,11 +141,19 @@ namespace Client.Core
 
             _renderer = _kernel.Get<IRenderer>();
 
-            IUserInterface userInterface = _kernel.Get<IUserInterface>();
+            IUserInterfaceManager userInterface = _kernel.Get<IUserInterfaceManager>();
             ITextureFactory textureFactory = _kernel.Get<ITextureFactory>();
             IUserInterfaceRenderer userInterfaceRenderer = _kernel.Get<IUserInterfaceRenderer>();
+            IInputService inputService = _kernel.Get<IInputService>();
+            
+            BackgroundElement element = new BackgroundElement(userInterface, 5054);
+            element.Position = new Vector2(50, 50);
+            element.Size = new Vector2(300, 300);
+
+            userInterface.Add(element);
 
             Bind(_renderer);
+            Bind(inputService);
             Bind(textureFactory);
             Bind(userInterface);
             Bind(userInterfaceRenderer);
