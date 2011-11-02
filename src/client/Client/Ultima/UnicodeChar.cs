@@ -3,7 +3,7 @@
  *   Copyright (c) 2011 OpenUO Software Team.
  *   All Right Reserved.
  *
- *   $Id$:
+ *   $Id: $:
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -12,20 +12,25 @@
  ***************************************************************************/
  #endregion
 
-using Client.Cores;
-using SharpDX;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using SharpDX.Direct3D9;
 
-namespace Client.Graphics
+namespace Client.Ultima
 {
-    public interface ITextureFactory : IUpdatable, IResourceContainer
+    public sealed class UnicodeChar
     {
-        void GetGumpSize(int index, out Vector2 size);
-        void GetLandSize(int index, out Vector2 size);
-        void GetStaticSize(int index, out Vector2 size);
-        Texture CreateGumpTexture(int index);
-        Texture CreateLandTexture(int index);
-        Texture CreateStaticTexture(int index);
-        Texture CreateUnicodeTexture(int index, string text);
+        public byte[] Bytes { get; set; }
+        public sbyte XOffset { get; set; }
+        public sbyte YOffset { get; set; }
+        public int Height { get; set; }
+        public int Width { get; set; }
+
+        public UnicodeChar()
+        {
+
+        }
     }
 }

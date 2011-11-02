@@ -150,7 +150,11 @@ namespace Client.Core
             element.Position = new Vector2(50, 50);
             element.Size = new Vector2(300, 300);
 
+            TextElement t = new TextElement(userInterface, 0, "This is a test.");
+            t.Position = new Vector2(60, 60);
+
             userInterface.Add(element);
+            userInterface.Add(t);
 
             Bind(_renderer);
             Bind(inputService);

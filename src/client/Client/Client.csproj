@@ -159,6 +159,7 @@
     <Compile Include="UI\Element.cs" />
     <Compile Include="UI\IUserInterfaceRenderer.cs" />
     <Compile Include="UI\IUserInterfaceManager.cs" />
+    <Compile Include="UI\TextElement.cs" />
     <Compile Include="UI\UserInterfaceRenderer.cs" />
     <Compile Include="UI\TextureElement.cs" />
     <Compile Include="UI\UserInterfaceManager.cs" />
@@ -179,6 +180,9 @@
     <Compile Include="Ultima\TileFlag.cs" />
     <Compile Include="Ultima\TileMatrix.cs" />
     <Compile Include="Core\UpdateState.cs" />
+    <Compile Include="Ultima\UnicodeChar.cs" />
+    <Compile Include="Ultima\UnicodeFont.cs" />
+    <Compile Include="Ultima\UnicodeFonts.cs" />
     <Compile Include="World.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
