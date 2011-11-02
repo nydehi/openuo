@@ -39,6 +39,7 @@ namespace Client.Graphics
         private readonly Gumps _gumps;
         private readonly Hues _hues;
         private readonly Engine _engine;
+        private readonly UnicodeFonts _unicodeFonts;
 
         private Texture _missingTexture;
         private DateTime _lastCacheClean;
@@ -59,6 +60,7 @@ namespace Client.Graphics
             _hues = new Hues(engine);
             _gumps = new Gumps(engine);
             _art = new Art(engine);
+            _unicodeFonts = new UnicodeFonts(engine);
         }
 
         public Texture CreateHue(int index)
@@ -80,6 +82,11 @@ namespace Client.Graphics
 
             size.X = description.Width;
             size.Y = description.Height;
+        }
+
+        public Texture CreateUnicodeTexture(int index, string text)
+        {
+            return _unicodeFonts.GetTexture(index, text);
         }
 
         public void GetLandSize(int index, out Vector2 size)
